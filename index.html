@@ -299,7 +299,7 @@
             localStorage.setItem('cars', JSON.stringify(cars));
         }
 
-        // TonConnect - ФИКС: полный URL!
+        // TonConnect - ПОЛНЫЙ URL ФИКС
         const tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
             manifestUrl: 'https://torquesh.vercel.app/tonconnect-manifest.json',
             buttonRootId: null
@@ -314,12 +314,150 @@
                 updateBalance();
             } catch (e) {
                 console.error(e);
-                alert('Connection failed or cancelled. Try Tonkeeper app if using @wallet.');
+                alert('Connection failed. Try Tonkeeper or check manifest file.');
             }
         };
 
-        // Остальной скрипт (passive income, render, navigation, race, shop) — идентичен предыдущему, работает.
+        // Passive income
+        function updateBalance() {
+            if (!isWalletConnected) return;
+            const now = Date.now();
+            const hoursPassed = (now - lastCollect) / 3600000;
+            const earned = Math.floor(incomePerHour * hoursPassed);
+            torque += earned;
+            document.getElementById('balance').innerText = torque.toLocaleString() + ' $TORQUE';
+            localStorage.setItem('torque', torque);
+        }
 
+        setInterval(updateBalance, 5000);
+        updateBalance();
+
+        document.getElementById('collect').onclick = () => {
+            if (!isWalletConnected) {
+                alert('Connect wallet first!');
+                return;
+            }
+            updateBalance();
+            lastCollect = Date.now();
+            localStorage.setItem('lastCollect', lastCollect);
+            Telegram.WebApp.HapticFeedback.notificationOccurred('success');
+        };
+
+        // Garage render
+        function renderGarage() {
+            const grid = document.getElementById('garage-grid');
+            grid.innerHTML = '';
+            const totalIncome = cars.reduce((a, c) => a + c.income, 0);
+            document.getElementById('income-display').innerText = totalIncome + ' $TORQUE/hr';
+            incomePerHour = totalIncome;
+            localStorage.setItem('income', incomePerHour);
+
+            cars.forEach((car, i) => {
+                const div = document.createElement('div');
+                div.className = 'car-card';
+                div.innerHTML = `
+                    <img class="car-img placeholder-img" src="${car.img}" alt="${car.name}">
+                    <p><strong>${car.name}</strong></p>
+                    <p>${car.rarity} • Lv.${car.level}</p>
+                    <p>${car.income} $TORQUE/hr</p>
+                `;
+                div.onclick = () => showCarDetail(i);
+                grid.appendChild(div);
+            });
+
+            for (let i = cars.length; i < 9; i++) {
+                const div = document.createElement('div');
+                div.className = 'car-card';
+                div.innerHTML = `<div class="car-img placeholder-img" style="font-size:40px;">+</div><p>Empty Slot</p>`;
+                grid.appendChild(div);
+            }
+        }
+
+        function showCarDetail(index) {
+            if (!isWalletConnected) {
+                alert('Connect wallet first!');
+                return;
+            }
+            const car = cars[index];
+            document.getElementById('detail-name').innerText = car.name;
+            document.getElementById('detail-img').src = car.img;
+            document.getElementById('detail-income').innerText = car.income + ' $TORQUE/hr';
+            showSection('car-detail');
+        }
+
+        // Navigation
+        function showSection(id) {
+            if (!isWalletConnected && id !== 'onboarding') {
+                alert('Please connect TON wallet first!');
+                return;
+            }
+
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            const navItem = document.querySelector(`.nav-item[data-section="${id}"]`);
+            if (navItem) navItem.classList.add('active');
+
+            if (id === 'garage') renderGarage();
+        }
+
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.onclick = () => showSection(item.dataset.section);
+        });
+
+        // Race
+        document.getElementById('start-race').onclick = () => {
+            if (!isWalletConnected) {
+                alert('Connect wallet first!');
+                return;
+            }
+            isRaceActive = true;
+            document.getElementById('race-overlay').style.display = 'flex';
+        };
+
+        function endRace(addReward = true) {
+            document.getElementById('race-overlay').style.display = 'none';
+            if (addReward && isRaceActive) {
+                torque += 2050;
+                updateBalance();
+                Telegram.WebApp.HapticFeedback.notificationOccurred('success');
+            }
+            isRaceActive = false;
+        }
+
+        document.getElementById('close-race').onclick = () => endRace(true);
+        document.getElementById('race-again').onclick = () => endRace(false);
+
+        // Shop
+        document.querySelectorAll('#shop .btn').forEach(btn => {
+            btn.onclick = () => {
+                if (!isWalletConnected) {
+                    alert('Connect wallet first!');
+                    return;
+                }
+                if (btn.innerText.includes('Open') || btn.innerText.includes('Buy')) {
+                    const rarities = ['Common', 'Rare', 'Epic', 'Legendary'];
+                    const names = ['Volt Racer', 'Turbo Drift', 'Chrome Bullet', 'Hyper Surge', 'Neon Phantom'];
+                    const newCar = {
+                        name: names[Math.floor(Math.random() * names.length)],
+                        rarity: rarities[Math.floor(Math.random() * rarities.length)],
+                        level: Math.floor(Math.random() * 15) + 1,
+                        income: Math.floor(Math.random() * 1500) + 300,
+                        img: `https://via.placeholder.com/300x200/111/${Math.random() > 0.5 ? '00FFFF' : 'FF00FF'}?text=New+Car`
+                    };
+                    cars.push(newCar);
+                    localStorage.setItem('cars', JSON.stringify(cars));
+                    alert(`Congrats! You got a ${newCar.rarity} ${newCar.name}!`);
+                    renderGarage();
+                    torque += 500;
+                    updateBalance();
+                    Telegram.WebApp.HapticFeedback.notificationOccurred('success');
+                }
+            };
+        });
+
+        // Initial
         renderGarage();
         if (isWalletConnected) {
             showSection('garage');
