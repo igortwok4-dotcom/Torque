@@ -30,6 +30,7 @@
   ];
 
   const carNames = ['Volt Racer', 'Turbo Drift', 'Chrome Bullet', 'Hyper Surge', 'Neon Phantom'];
+  const fallbackCarImage = 'assets/car-placeholder.svg';
 
   const state = {
     torque: Number(localStorage.getItem(STORAGE_KEYS.torque) || '0'),
@@ -92,9 +93,19 @@
     return getComputedStyle(document.documentElement).getPropertyValue(`--${name}`).trim();
   }
 
+  function applyImageFallback(img, label) {
+    if (!img) return;
+    img.onerror = () => {
+      if (img.src.includes(fallbackCarImage)) return;
+      img.src = fallbackCarImage;
+      img.alt = label || 'Car';
+      img.classList.add('img-fallback');
+    };
+  }
+
   function syncTorqueUI() {
     if (!elements.balance) return;
-    elements.balance.textContent = `${state.torque.toLocaleString()} $TORQUE`;
+    elements.balance.textContent = `$TORQUE ${state.torque.toLocaleString()}`;
     localStorage.setItem(STORAGE_KEYS.torque, String(state.torque));
   }
 
@@ -117,7 +128,6 @@
   function renderGarage() {
     const totalIncome = state.cars.reduce((sum, car) => sum + car.income, 0);
     state.incomePerHour = totalIncome;
-    localStorage.setItem('income', String(state.incomePerHour));
 
     if (elements.incomeDisplay) {
       elements.incomeDisplay.textContent = `${totalIncome.toLocaleString()} $TORQUE/hr`;
@@ -137,12 +147,44 @@
     state.cars.forEach((car, index) => {
       const card = document.createElement('div');
       card.className = 'car-card';
-      card.innerHTML = `
-        <img class="car-img" src="${car.img}" alt="${car.name}">
-        <p><strong>${car.name}</strong></p>
-        <p>${car.rarity} • Lv.${car.level}</p>
-        <p>${car.income} $TORQUE/hr</p>
-      `;
+
+      const imageWrap = document.createElement('div');
+      imageWrap.className = 'car-image-wrap';
+
+      const img = document.createElement('img');
+      img.className = 'car-img';
+      img.src = car.img;
+      img.alt = car.name;
+      applyImageFallback(img, car.name);
+
+      const badges = document.createElement('div');
+      badges.className = 'car-badges';
+
+      const rarity = document.createElement('span');
+      rarity.className = 'badge rarity';
+      rarity.textContent = car.rarity;
+
+      const level = document.createElement('span');
+      level.className = 'badge level';
+      level.textContent = `Lv.${car.level}`;
+
+      badges.appendChild(rarity);
+      badges.appendChild(level);
+      imageWrap.appendChild(img);
+      imageWrap.appendChild(badges);
+
+      const title = document.createElement('div');
+      title.className = 'car-title';
+      title.textContent = car.name;
+
+      const income = document.createElement('div');
+      income.className = 'car-income';
+      income.innerHTML = `<span>⚡</span>${car.income} / hr`;
+
+      card.appendChild(imageWrap);
+      card.appendChild(title);
+      card.appendChild(income);
+
       card.addEventListener('click', () => showCarDetail(index));
       elements.garageGrid.appendChild(card);
     });
@@ -152,7 +194,8 @@
       slot.className = 'car-card';
       slot.innerHTML = `
         <div class="empty-slot">+</div>
-        <p>Open Box</p>
+        <div class="car-title">Open Box</div>
+        <div class="car-income">Get a new car</div>
       `;
       slot.addEventListener('click', () => showSection('shop'));
       elements.garageGrid.appendChild(slot);
@@ -162,7 +205,11 @@
   function showCarDetail(index) {
     const car = state.cars[index];
     if (!car) return;
-    if (elements.detailImg) elements.detailImg.src = car.img;
+    if (elements.detailImg) {
+      elements.detailImg.src = car.img;
+      elements.detailImg.alt = car.name;
+      applyImageFallback(elements.detailImg, car.name);
+    }
     if (elements.detailName) elements.detailName.textContent = car.name;
     if (elements.detailRarity) elements.detailRarity.textContent = `${car.rarity} • Level ${car.level}`;
     if (elements.detailIncome) elements.detailIncome.textContent = `${car.income} $TORQUE/hr`;
@@ -243,7 +290,13 @@
     const photoUrl = user.photo_url || `https://via.placeholder.com/80/111/00FFFF?text=${username[0]}`;
 
     if (elements.userName) elements.userName.textContent = username;
-    if (elements.userAvatar) elements.userAvatar.src = photoUrl;
+    if (elements.userAvatar) {
+      elements.userAvatar.src = photoUrl;
+      elements.userAvatar.alt = username;
+      elements.userAvatar.onerror = () => {
+        elements.userAvatar.src = 'https://via.placeholder.com/80/111/00FFFF?text=U';
+      };
+    }
     if (elements.userLevel) elements.userLevel.textContent = String(state.level);
     if (elements.userRank) elements.userRank.textContent = String(999 - state.level);
 
@@ -302,7 +355,7 @@
     const rect = elements.raceCanvas.getBoundingClientRect();
     if (rect.width === 0) return;
     elements.raceCanvas.width = rect.width;
-    elements.raceCanvas.height = 300;
+    elements.raceCanvas.height = 240;
   }
 
   function drawRaceFrame(timestamp) {
@@ -392,13 +445,12 @@
 
     if (crashed) {
       alert(`Crash at ${multiplier.toFixed(2)}x! Better luck next time.`);
+      TelegramApp?.HapticFeedback?.notificationOccurred('error');
     } else if (success) {
       alert(`Cash out at ${multiplier.toFixed(2)}x!`);
+      TelegramApp?.HapticFeedback?.notificationOccurred('success');
     }
 
-    if (TelegramApp) {
-      TelegramApp.HapticFeedback?.notificationOccurred('success');
-    }
     multiplier = 1;
   }
 
@@ -493,6 +545,9 @@
       return;
     }
 
+    accrueIncome();
+    syncTorqueUI();
+
     const cost = Number(btn.dataset.cost || 0);
     if (state.torque < cost) {
       alert('Not enough $TORQUE. Win races or wait for passive income.');
@@ -510,7 +565,11 @@
 
     setTimeout(() => {
       if (!elements.revealCar) return;
-      if (elements.newCarImg) elements.newCarImg.src = newCar.img;
+      if (elements.newCarImg) {
+        elements.newCarImg.src = newCar.img;
+        elements.newCarImg.alt = newCar.name;
+        applyImageFallback(elements.newCarImg, newCar.name);
+      }
       if (elements.newCarName) elements.newCarName.textContent = `${newCar.name} Lv.${newCar.level}`;
       if (elements.newCarRarity) {
         elements.newCarRarity.textContent = `${newCar.rarity} • +${newCar.income} $TORQUE/hr`;
@@ -555,6 +614,8 @@
           await tonConnectUI.connectWallet();
           state.isWalletConnected = true;
           localStorage.setItem(STORAGE_KEYS.walletConnected, 'true');
+          state.lastUpdate = Date.now();
+          localStorage.setItem(STORAGE_KEYS.lastUpdate, String(state.lastUpdate));
           showSection('garage');
           syncTorqueUI();
         } catch (error) {
