@@ -506,6 +506,60 @@ canvas {
   margin: 12px 0;
 }
 
+.stake-panel {
+  margin-top: 16px;
+  padding: 14px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(7, 10, 18, 0.5);
+}
+
+.stake-label {
+  display: block;
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+
+#stake-input {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(7, 10, 18, 0.85);
+  color: var(--text);
+  font-size: 14px;
+}
+
+#stake-input:disabled {
+  opacity: 0.6;
+}
+
+.stake-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+
+.chip-action {
+  cursor: pointer;
+  border: 1px solid rgba(0, 229, 255, 0.25);
+  color: var(--neon-cyan);
+}
+
+.stake-balance {
+  margin-top: 10px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.stake-live {
+  margin-top: 6px;
+  font-size: 13px;
+  color: var(--neon-cyan);
+}
+
 .leaderboard-row {
   display: grid;
   grid-template-columns: auto 1fr auto;
