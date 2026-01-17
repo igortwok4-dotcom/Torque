@@ -1,37 +1,419 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Мой первый Mini App</title>
+    <title>Torque</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
     <style>
-        body { font-family: Arial, sans-serif; text-align: center; padding: 50px; transition: background 0.3s; }
-        h1 { font-size: 2em; }
-        button { padding: 15px 30px; font-size: 1.2em; margin-top: 30px; cursor: pointer; }
+        :root {
+            --bg: #0B0B0F;
+            --card: rgba(20, 25, 40, 0.6);
+            --neon-cyan: #00FFFF;
+            --neon-magenta: #FF00FF;
+            --neon-blue: #00D0FF;
+            --text: #FFFFFF;
+            --text-secondary: #B0B0B0;
+        }
+        body {
+            margin: 0;
+            font-family: 'Roboto', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        header {
+            padding: 16px;
+            text-align: center;
+            border-bottom: 1px solid rgba(0, 255, 255, 0.2);
+        }
+        .logo {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 32px;
+            font-weight: bold;
+            background: linear-gradient(to right, var(--neon-cyan), var(--neon-magenta));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .balance {
+            position: absolute;
+            right: 16px;
+            top: 16px;
+            font-size: 14px;
+        }
+        main {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+        }
+        .section { display: none; }
+        .section.active { display: block; }
+        .card {
+            background: var(--card);
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 16px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(0, 255, 255, 0.2);
+        }
+        .btn {
+            background: linear-gradient(to right, var(--neon-cyan), var(--neon-blue));
+            color: black;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 12px;
+        }
+        .btn-secondary {
+            background: rgba(255, 0, 255, 0.2);
+            color: var(--text);
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 16px;
+        }
+        .car-card {
+            text-align: center;
+        }
+        .car-img {
+            width: 100%;
+            height: 120px;
+            object-fit: cover;
+            border-radius: 12px;
+            border: 2px solid var(--neon-cyan);
+        }
+        .income {
+            text-align: center;
+            font-size: 24px;
+            margin: 20px 0;
+        }
+        .collect-btn {
+            background: linear-gradient(to right, var(--neon-magenta), var(--neon-cyan));
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% { box-shadow: 0 0 10px var(--neon-cyan); }
+            50% { box-shadow: 0 0 30px var(--neon-cyan); }
+            100% { box-shadow: 0 0 10px var(--neon-cyan); }
+        }
+        .bottom-nav {
+            display: flex;
+            background: var(--card);
+            border-top: 1px solid rgba(0, 255, 255, 0.2);
+        }
+        .nav-item {
+            flex: 1;
+            text-align: center;
+            padding: 12px;
+            cursor: pointer;
+        }
+        .nav-item.active {
+            color: var(--neon-cyan);
+            border-top: 3px solid var(--neon-cyan);
+        }
+        .hidden { display: none; }
+        .overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.9);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+        }
+        /* Placeholder images - replace with real ones later */
+        .placeholder-img {
+            background: linear-gradient(45deg, #111, #222);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--neon-cyan);
+            font-size: 20px;
+        }
     </style>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700&family=Roboto&display=swap" rel="stylesheet">
 </head>
 <body>
-    <h1 id="greeting">Загрузка...</h1>
-    <button onclick="Telegram.WebApp.close()">Закрыть апп</button>
+    <header>
+        <div class="logo">TORQUE</div>
+        <div class="balance" id="balance">0 $TORQUE</div>
+    </header>
+
+    <main>
+        <!-- Onboarding -->
+        <div id="onboarding" class="section active">
+            <div style="text-align:center; margin-top:50%">
+                <h1 class="logo" style="font-size:48px;">TORQUE</h1>
+                <p style="font-size:18px; margin:20px;">Build your crypto garage.<br>Earn while you drift.</p>
+                <button class="btn" id="connect-wallet">Connect TON Wallet</button>
+                <p style="margin-top:40px; font-size:12px;">Powered by TON • Earn real crypto</p>
+            </div>
+        </div>
+
+        <!-- Garage -->
+        <div id="garage" class="section">
+            <div class="income" id="income-display">900 $TORQUE/hr</div>
+            <button class="btn collect-btn" id="collect">Collect Rewards</button>
+            <div class="grid" id="garage-grid"></div>
+            <button class="btn" style="position:fixed; bottom:80px; right:16px; border-radius:50%; width:60px; height:60px; font-size:30px;">⚡</button>
+        </div>
+
+        <!-- Car Detail -->
+        <div id="car-detail" class="section">
+            <button onclick="showSection('garage')">← Back</button>
+            <img class="car-img" id="detail-img" src="" alt="">
+            <h2 id="detail-name">Volt Racer</h2>
+            <p>Rare • Level 8</p>
+            <div class="card">
+                <p>Current Income: <strong id="detail-income">900 $TORQUE/hr</strong></p>
+                <button class="btn btn-secondary" id="stake-btn">Stake</button>
+            </div>
+            <div class="card">
+                <h3>Performance Stats</h3>
+                <p>Power <progress value="72" max="100"></progress></p>
+                <p>Speed <progress value="75" max="100"></progress></p>
+                <p>Drift <progress value="78" max="100"></progress></p>
+                <p>Style <progress value="70" max="100"></progress></p>
+            </div>
+            <div class="card">
+                <h3>Tuning Shop</h3>
+                <div class="grid">
+                    <div><p>Engine Lv.2</p><button class="btn">Upgrade 1500 ST</button></div>
+                    <div><p>Nitro Lv.3</p><button class="btn">Upgrade 1200 ST</button></div>
+                    <div><p>Neon Lv.5</p><button class="btn">Upgrade 1200 ST</button></div>
+                    <div><p>Spoiler Lv.1</p><button class="btn">Upgrade 1500 ST</button></div>
+                </div>
+                <button class="btn" style="background:magenta;">Race Now</button>
+            </div>
+        </div>
+
+        <!-- Shop -->
+        <div id="shop" class="section">
+            <div class="card">
+                <h3>Car Boxes</h3>
+                <div>
+                    <p>Common Box • 60% Common, 30% Rare, 10% Epic</p>
+                    <button class="btn">Open • 100 Stars</button>
+                </div>
+                <div>
+                    <p>Rare Box • 40% Rare, 40% Epic, 20% Legendary</p>
+                    <button class="btn">Open • 0.5 TON</button>
+                </div>
+                <div>
+                    <p>Epic Box • 50% Epic, 50% Legendary</p>
+                    <button class="btn">Open • 1.5 TON</button>
+                </div>
+            </div>
+            <div class="card">
+                <h3>Power-Ups & Boosts</h3>
+                <div><p>2x Income Boost 24 hours</p><button class="btn">Buy • 200 Stars</button></div>
+                <div><p>Extra Garage Slot</p><button class="btn">Buy • 0.3 TON</button></div>
+                <div><p>Auto-Collect 7 days</p><button class="btn">Buy • 300 Stars</button></div>
+            </div>
+        </div>
+
+        <!-- Races -->
+        <div id="races" class="section">
+            <div class="card">
+                <h2>Neon Drift Race</h2>
+                <p>Drift through the neon highway and earn $TORQUE!</p>
+                <div style="text-align:center; margin:20px 0;">
+                    <h1 style="font-size:60px;">READY</h1>
+                    <p>30s Duration • 3 Nitro Boosts • 5x Max Combo</p>
+                    <button class="btn" id="start-race">Start Race</button>
+                </div>
+                <h3>Today's Top Racers</h3>
+                <ol>
+                    <li>SpeedDemon — +5000</li>
+                    <li>NeonKing — +3000</li>
+                    <li>DriftMaster — +2000</li>
+                </ol>
+            </div>
+        </div>
+
+        <!-- Race Overlay -->
+        <div id="race-overlay" class="overlay hidden">
+            <h1>Race Complete!</h1>
+            <h2>4 100 points</h2>
+            <p>Reward Earned +2050 $TORQUE</p>
+            <button class="btn btn-secondary" onclick="closeRace()">Close</button>
+            <button class="btn" onclick="closeRace()">Race Again</button>
+        </div>
+
+        <!-- Profile -->
+        <div id="profile" class="section">
+            <div class="card" style="text-align:center;">
+                <div style="width:80px; height:80px; background:gray; border-radius:50%; margin:0 auto;"></div>
+                <h2>Player_28</h2>
+                <p>Level 28 • Rank #42</p>
+                <progress value="65" max="100" style="width:100%;"></progress>
+                <p>6 Cars Owned • 14,200 Garage Value • 42 Race Wins</p>
+            </div>
+            <div class="card">
+                <h3>Achievements</h3>
+                <div class="grid">
+                    <div>First Ride</div><div>Speed Demon</div><div>Collector</div>
+                </div>
+            </div>
+            <div class="card">
+                <h3>Global Leaderboard</h3>
+                <ol>
+                    <li>SpeedDemon — 25 000 Value</li>
+                    <li>NeonKing — 21 000 Value</li>
+                </ol>
+            </div>
+        </div>
+    </main>
+
+    <div class="bottom-nav">
+        <div class="nav-item active" data-section="garage">🏠 Garage</div>
+        <div class="nav-item" data-section="shop">🛒 Shop</div>
+        <div class="nav-item" data-section="races">⚡ Races</div>
+        <div class="nav-item" data-section="profile">👤 Profile</div>
+    </div>
 
     <script>
-        // Инициализация Telegram WebApp
         Telegram.WebApp.ready();
-        Telegram.WebApp.expand(); // Разворачиваем на весь экран
+        Telegram.WebApp.expand();
 
-        // Берём имя юзера из Telegram (безопасно только для показа)
-        const user = Telegram.WebApp.initDataUnsafe.user;
-        const firstName = user?.first_name || "Друг";
-
-        // Меняем приветствие
-        document.getElementById("greeting").innerText = `Привет, ${firstName}! 🔥\nЭто твой Mini App, бро!`;
-
-        // Автоматически подгоняем тему под Telegram
+        // Theme adaptation
         const theme = Telegram.WebApp.themeParams;
-        document.body.style.backgroundColor = theme.bg_color || "#ffffff";
-        document.body.style.color = theme.text_color || "#000000";
+        document.body.style.backgroundColor = theme.bg_color || '#0B0B0F';
+        document.body.style.color = theme.text_color || '#FFFFFF';
+
+        // Data
+        let torque = parseInt(localStorage.getItem('torque') || '0');
+        let incomePerHour = parseInt(localStorage.getItem('income') || '900');
+        let lastCollect = Date.now();
+        let cars = JSON.parse(localStorage.getItem('cars') || '[]');
+
+        // Default starter cars
+        if (cars.length === 0) {
+            cars = [
+                { name: "Volt Racer", rarity: "Rare", level: 8, income: 900, img: "https://via.placeholder.com/300x200/111/00FFFF?text=Volt+Racer" },
+                { name: "Turbo Drift", rarity: "Epic", level: 6, income: 450, img: "https://via.placeholder.com/300x200/111/FF00FF?text=Turbo+Drift" }
+            ];
+            localStorage.setItem('cars', JSON.stringify(cars));
+        }
+
+        // TonConnect
+        const tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
+            manifestUrl: 'https://raw.githubusercontent.com/ton-community/tutorials/main/03-client/test-public/manifest.json',
+            buttonRootId: null
+        });
+
+        document.getElementById('connect-wallet').onclick = async () => {
+            await tonConnectUI.connectWallet();
+            document.getElementById('onboarding').classList.remove('active');
+            document.getElementById('garage').classList.add('active');
+            updateBalance();
+        };
+
+        // Update balance & passive income
+        function updateBalance() {
+            const now = Date.now();
+            const hoursPassed = (now - lastCollect) / 3600000;
+            torque += Math.floor(incomePerHour * hoursPassed);
+            document.getElementById('balance').innerText = torque.toLocaleString() + ' $TORQUE';
+            localStorage.setItem('torque', torque);
+        }
+
+        setInterval(updateBalance, 5000);
+        updateBalance();
+
+        document.getElementById('collect').onclick = () => {
+            updateBalance();
+            lastCollect = Date.now();
+            localStorage.setItem('lastCollect', lastCollect);
+        };
+
+        // Render garage
+        function renderGarage() {
+            const grid = document.getElementById('garage-grid');
+            grid.innerHTML = '';
+            cars.forEach((car, i) => {
+                const div = document.createElement('div');
+                div.className = 'car-card';
+                div.innerHTML = `
+                    <img class="car-img placeholder-img" src="${car.img}" alt="${car.name}">
+                    <p><strong>${car.name}</strong></p>
+                    <p>${car.rarity} • Lv.${car.level}</p>
+                    <p>${car.income} $TORQUE/hr</p>
+                `;
+                div.onclick = () => showCarDetail(i);
+                grid.appendChild(div);
+            });
+            // Empty slots
+            for (let i = cars.length; i < 9; i++) {
+                const div = document.createElement('div');
+                div.className = 'car-card';
+                div.innerHTML = `<div class="car-img placeholder-img">+</div><p>Buy Box</p>`;
+                grid.appendChild(div);
+            }
+            document.getElementById('income-display').innerText = cars.reduce((a,c)=>a+c.income,0) + ' $TORQUE/hr';
+        }
+
+        function showCarDetail(index) {
+            const car = cars[index];
+            document.getElementById('detail-name').innerText = car.name;
+            document.getElementById('detail-img').src = car.img;
+            document.getElementById('detail-income').innerText = car.income + ' $TORQUE/hr';
+            showSection('car-detail');
+        }
+
+        // Navigation
+        function showSection(id) {
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            document.querySelector(`.nav-item[data-section="${id}"]`)?.classList.add('active');
+            if (id === 'garage') renderGarage();
+        }
+
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.onclick = () => showSection(item.dataset.section);
+        });
+
+        // Simple race simulation
+        document.getElementById('start-race').onclick = () => {
+            document.getElementById('race-overlay').classList.remove('hidden');
+        };
+        function closeRace() {
+            document.getElementById('race-overlay').classList.add('hidden');
+            torque += 2050;
+            updateBalance();
+        }
+
+        // Shop - simple box open simulation
+        document.querySelectorAll('#shop .btn').forEach(btn => {
+            btn.onclick = () => {
+                if (btn.innerText.includes('Open')) {
+                    // Simulate random car
+                    const rarities = ['Common', 'Rare', 'Epic', 'Legendary'];
+                    const newCar = {
+                        name: ['Volt Racer', 'Turbo Drift', 'Chrome Bullet', 'Hyper Surge'][Math.floor(Math.random()*4)],
+                        rarity: rarities[Math.floor(Math.random()*rarities.length)],
+                        level: Math.floor(Math.random()*10)+1,
+                        income: Math.floor(Math.random()*1000)+300,
+                        img: "https://via.placeholder.com/300x200/111/" + (Math.random() > 0.5 ? '00FFFF' : 'FF00FF') + "?text=New+Car"
+                    };
+                    cars.push(newCar);
+                    localStorage.setItem('cars', JSON.stringify(cars));
+                    alert('You got a ' + newCar.rarity + ' ' + newCar.name + '!');
+                    renderGarage();
+                }
+            };
+        });
+
+        renderGarage();
     </script>
 </body>
-
 </html>
