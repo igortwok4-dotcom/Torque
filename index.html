@@ -6,143 +6,272 @@
   <title>TORQUE — Telegram Mini App</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700&family=Roboto:wght@400;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="styles.css" />
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
 </head>
 <body>
   <header class="app-header">
-    <div class="logo">TORQUE</div>
-    <div class="balance" id="balance">0 $TORQUE</div>
+    <div class="header-left">
+      <div class="logo">TORQUE</div>
+    </div>
+    <div class="header-right">
+      <div class="chip chip-balance" id="balance">$TORQUE 0</div>
+      <div class="chip chip-ton">TON 2.45</div>
+    </div>
   </header>
 
   <main>
-    <section id="onboarding" class="section active">
-      <div class="onboarding">
-        <h1 class="logo logo-xl">TORQUE</h1>
-        <p class="subtitle">Build your crypto garage.<br />Earn while you drift.</p>
-        <button class="btn" id="connect-wallet">Connect TON Wallet</button>
-        <p class="fineprint">Powered by TON • Earn real crypto</p>
-      </div>
-    </section>
+    <div class="container">
+      <section id="onboarding" class="section active">
+        <div class="onboarding card">
+          <h1 class="logo logo-xl">TORQUE</h1>
+          <p class="subtitle">Build your crypto garage.<br />Earn while you drift.</p>
+          <p class="caption">Collect futuristic cars, upgrade them with neon mods, race against players, and earn real TON crypto passively.</p>
+          <button class="btn" id="connect-wallet">Connect TON Wallet</button>
+          <p class="fineprint">Powered by TON • Earn real crypto</p>
+          <div class="stat-row">
+            <div class="stat-card">
+              <span class="stat-value">100+</span>
+              <span class="stat-label">Unique Cars</span>
+            </div>
+            <div class="stat-card">
+              <span class="stat-value accent">24/7</span>
+              <span class="stat-label">Passive Income</span>
+            </div>
+            <div class="stat-card">
+              <span class="stat-value">∞</span>
+              <span class="stat-label">Race & Win</span>
+            </div>
+          </div>
+        </div>
+      </section>
 
-    <section id="garage" class="section">
-      <div class="income" id="income-display">0 $TORQUE/hr</div>
-      <button class="btn collect-btn" id="collect" style="display:none;">Collect Rewards</button>
-      <p id="garage-hint" class="hint">Open your first box in Shop to start earning!</p>
-      <div class="grid" id="garage-grid"></div>
-      <button class="race-fab" id="go-races" aria-label="Go to races">⚡</button>
-    </section>
+      <section id="garage" class="section">
+        <div class="card earnings-card">
+          <div class="card-title">Passive Earnings</div>
+          <div class="income" id="income-display">0 $TORQUE/hr</div>
+          <button class="btn collect-btn" id="collect" style="display:none;">Collect Rewards</button>
+        </div>
+        <p id="garage-hint" class="hint">Open your first box in Shop to start earning!</p>
+        <div class="section-header">
+          <h3>My Garage</h3>
+          <span class="muted">Slots update automatically</span>
+        </div>
+        <div class="grid" id="garage-grid"></div>
+        <button class="race-fab" id="go-races" aria-label="Go to races">⚡</button>
+      </section>
 
-    <section id="car-detail" class="section">
-      <button class="back-btn" id="back-to-garage">← Back</button>
-      <img class="car-img" id="detail-img" src="" alt="" />
-      <h2 id="detail-name">Car Name</h2>
-      <p id="detail-rarity">Rarity • Level</p>
-      <div class="card">
-        <p>Current Income: <strong id="detail-income">0 $TORQUE/hr</strong></p>
-        <button class="btn btn-secondary" id="stake-btn">Stake for +50%</button>
-      </div>
-      <div class="card">
-        <h3>Performance Stats</h3>
-        <p>Power <progress value="70" max="100"></progress> 70</p>
-        <p>Speed <progress value="75" max="100"></progress> 75</p>
-        <p>Drift <progress value="80" max="100"></progress> 80</p>
-        <p>Style <progress value="65" max="100"></progress> 65</p>
-      </div>
-      <div class="card">
-        <h3>Tuning Shop</h3>
-        <div class="grid">
-          <div><p>Engine</p><button class="btn">Upgrade</button></div>
-          <div><p>Nitro</p><button class="btn">Upgrade</button></div>
-          <div><p>Neon</p><button class="btn">Upgrade</button></div>
-          <div><p>Spoiler</p><button class="btn">Upgrade</button></div>
+      <section id="car-detail" class="section">
+        <button class="back-btn" id="back-to-garage">← Back</button>
+        <div class="card">
+          <img class="car-img" id="detail-img" src="" alt="" />
+          <div class="detail-header">
+            <h2 id="detail-name">Car Name</h2>
+            <p id="detail-rarity">Rarity • Level</p>
+          </div>
+          <div class="detail-meta">
+            <span class="chip chip-compact" id="detail-income">0 $TORQUE/hr</span>
+            <button class="btn btn-secondary" id="stake-btn">Stake for +50%</button>
+          </div>
         </div>
-      </div>
-    </section>
+        <div class="card">
+          <h3>Performance Stats</h3>
+          <p>Power <progress value="70" max="100"></progress> 70</p>
+          <p>Speed <progress value="75" max="100"></progress> 75</p>
+          <p>Drift <progress value="80" max="100"></progress> 80</p>
+          <p>Style <progress value="65" max="100"></progress> 65</p>
+        </div>
+        <div class="card">
+          <h3>Tuning Shop</h3>
+          <div class="grid">
+            <div><p>Engine</p><button class="btn">Upgrade</button></div>
+            <div><p>Nitro</p><button class="btn">Upgrade</button></div>
+            <div><p>Neon</p><button class="btn">Upgrade</button></div>
+            <div><p>Spoiler</p><button class="btn">Upgrade</button></div>
+          </div>
+        </div>
+      </section>
 
-    <section id="shop" class="section">
-      <div class="card">
-        <h3>Car Boxes</h3>
-        <div class="shop-item">
-          <p>Common Box • 60% Common, 30% Rare, 10% Epic</p>
-          <button class="btn" data-box="common" data-cost="5000">Open • 5000 $TORQUE</button>
+      <section id="shop" class="section">
+        <div class="featured-card">
+          <div class="featured-badge">Legendary Box</div>
+          <p class="featured-title">Guaranteed Epic or Legendary car</p>
+          <div class="featured-actions">
+            <div class="chip chip-compact">1.5 TON</div>
+            <button class="btn btn-small">Open Now</button>
+          </div>
         </div>
-        <div class="shop-item">
-          <p>Rare Box • 40% Rare, 40% Epic, 20% Legendary</p>
-          <button class="btn" data-box="rare" data-cost="15000">Open • 15000 $TORQUE</button>
-        </div>
-        <div class="shop-item">
-          <p>Epic Box • 50% Epic, 50% Legendary</p>
-          <button class="btn" data-box="epic" data-cost="50000">Open • 50000 $TORQUE</button>
-        </div>
-      </div>
-      <div class="card">
-        <h3>Power-Ups & Boosts</h3>
-        <div class="shop-item">
-          <p>2x Income Boost 24 hours</p>
-          <button class="btn btn-secondary" disabled>Coming soon</button>
-        </div>
-        <div class="shop-item">
-          <p>Extra Garage Slot</p>
-          <button class="btn btn-secondary" disabled>Coming soon</button>
-        </div>
-        <div class="shop-item">
-          <p>Auto-Collect 7 days</p>
-          <button class="btn btn-secondary" disabled>Coming soon</button>
-        </div>
-      </div>
-    </section>
 
-    <section id="races" class="section">
-      <div class="card">
-        <h2>Neon Drift Race</h2>
-        <p>Drift longer for higher multiplier! Cash out before crash!</p>
-        <canvas id="race-canvas"></canvas>
-        <div class="multiplier" id="multiplier">1.00x</div>
-        <div class="race-controls">
-          <button class="btn" id="nitro-btn" style="display:none;">Nitro Boost</button>
-          <button class="btn" id="cash-out-btn" style="display:none;">Cash Out</button>
+        <div class="section-header">
+          <h3>⚡ Car Boxes</h3>
         </div>
-        <button class="btn" id="start-race">Start Race</button>
-        <p class="hint">Press & hold Nitro to surge the multiplier.</p>
-        <h3>Today's Top Racers</h3>
-        <ol>
-          <li>SpeedDemon — 15.3x</li>
-          <li>NeonKing — 12.7x</li>
-          <li>DriftMaster — 10.5x</li>
-        </ol>
-      </div>
-    </section>
+        <div class="shop-list">
+          <div class="shop-row card">
+            <div class="shop-thumb">C</div>
+            <div class="shop-info">
+              <h4>Common Box</h4>
+              <p>60% Common, 30% Rare, 10% Epic</p>
+            </div>
+            <div class="shop-actions">
+              <div class="chip chip-compact">5000 $TORQUE</div>
+              <button class="btn btn-small" data-box="common" data-cost="5000">Open</button>
+            </div>
+          </div>
+          <div class="shop-row card">
+            <div class="shop-thumb">R</div>
+            <div class="shop-info">
+              <h4>Rare Box</h4>
+              <p>40% Rare, 40% Epic, 20% Legendary</p>
+            </div>
+            <div class="shop-actions">
+              <div class="chip chip-compact">15000 $TORQUE</div>
+              <button class="btn btn-small" data-box="rare" data-cost="15000">Open</button>
+            </div>
+          </div>
+          <div class="shop-row card">
+            <div class="shop-thumb">E</div>
+            <div class="shop-info">
+              <h4>Epic Box</h4>
+              <p>50% Epic, 50% Legendary</p>
+            </div>
+            <div class="shop-actions">
+              <div class="chip chip-compact">50000 $TORQUE</div>
+              <button class="btn btn-small" data-box="epic" data-cost="50000">Open</button>
+            </div>
+          </div>
+        </div>
 
-    <section id="profile" class="section">
-      <div class="card profile-card">
-        <img class="avatar" id="user-avatar" src="" alt="User avatar" />
-        <div>
-          <h2 id="user-name">Player</h2>
-          <p>Level <span id="user-level">1</span> • Rank #<span id="user-rank">999</span></p>
-          <progress id="level-progress" value="0" max="100"></progress>
-          <p id="user-stats">
-            <span id="cars-owned">0</span> Cars Owned •
-            <span id="garage-value">0</span> Garage Value •
-            <span id="race-wins">0</span> Race Wins
-          </p>
+        <div class="section-header">
+          <h3>⚡ Power-Ups & Boosts</h3>
         </div>
-      </div>
-      <div class="card">
-        <h3>Achievements</h3>
-        <div class="grid achievements">
-          <div class="achievement" data-achievement="first-ride">🏁 First Ride<br /><small>Get your first car</small></div>
-          <div class="achievement" data-achievement="speed-demon">⚡ Speed Demon<br /><small>Win 10 races</small></div>
-          <div class="achievement" data-achievement="collector">🧑‍🏭 Collector<br /><small>Own 5 cars</small></div>
+        <div class="shop-list">
+          <div class="shop-row card">
+            <div class="shop-thumb">2x</div>
+            <div class="shop-info">
+              <h4>2x Income Boost</h4>
+              <p>24 hours</p>
+            </div>
+            <div class="shop-actions">
+              <div class="chip chip-compact">200 Stars</div>
+              <button class="btn btn-small btn-secondary" disabled>Buy</button>
+            </div>
+          </div>
+          <div class="shop-row card">
+            <div class="shop-thumb">+</div>
+            <div class="shop-info">
+              <h4>Extra Garage Slot</h4>
+              <p>Permanent</p>
+            </div>
+            <div class="shop-actions">
+              <div class="chip chip-compact">0.3 TON</div>
+              <button class="btn btn-small btn-secondary" disabled>Buy</button>
+            </div>
+          </div>
+          <div class="shop-row card">
+            <div class="shop-thumb">A</div>
+            <div class="shop-info">
+              <h4>Auto-Collect</h4>
+              <p>7 days</p>
+            </div>
+            <div class="shop-actions">
+              <div class="chip chip-compact">300 Stars</div>
+              <button class="btn btn-small btn-secondary" disabled>Buy</button>
+            </div>
+          </div>
         </div>
-      </div>
-      <div class="card">
-        <h3>Local Leaderboard</h3>
-        <ol id="leaderboard-list"></ol>
-      </div>
-    </section>
+      </section>
+
+      <section id="races" class="section">
+        <div class="card race-card">
+          <h2>Neon Drift Race</h2>
+          <p class="muted">Drift through the neon highway and earn $TORQUE!</p>
+          <div class="race-preview">
+            <canvas id="race-canvas"></canvas>
+            <div class="ready-text">READY</div>
+          </div>
+          <div class="stat-chips">
+            <span class="chip chip-compact">30s Duration</span>
+            <span class="chip chip-compact">3 Nitro Boosts</span>
+            <span class="chip chip-compact">5x Max Combo</span>
+          </div>
+          <div class="multiplier" id="multiplier">1.00x</div>
+          <div class="race-controls">
+            <button class="btn" id="nitro-btn" style="display:none;">Nitro Boost</button>
+            <button class="btn" id="cash-out-btn" style="display:none;">Cash Out</button>
+          </div>
+          <button class="btn" id="start-race">Start Race</button>
+        </div>
+
+        <div class="section-header">
+          <h3>Today's Top Racers</h3>
+        </div>
+        <div class="leaderboard-cards">
+          <div class="leaderboard-row card">
+            <span class="rank-badge gold">1</span>
+            <div>
+              <strong>SpeedDemon</strong>
+              <p class="muted">125 000 pts</p>
+            </div>
+            <span class="chip chip-compact">+5000</span>
+          </div>
+          <div class="leaderboard-row card">
+            <span class="rank-badge silver">2</span>
+            <div>
+              <strong>NeonKing</strong>
+              <p class="muted">98 000 pts</p>
+            </div>
+            <span class="chip chip-compact">+3000</span>
+          </div>
+          <div class="leaderboard-row card">
+            <span class="rank-badge bronze">3</span>
+            <div>
+              <strong>DriftMaster</strong>
+              <p class="muted">87 000 pts</p>
+            </div>
+            <span class="chip chip-compact">+2000</span>
+          </div>
+        </div>
+      </section>
+
+      <section id="profile" class="section">
+        <div class="card profile-card">
+          <img class="avatar" id="user-avatar" src="" alt="User avatar" />
+          <div>
+            <h2 id="user-name">Player</h2>
+            <p>Level <span id="user-level">1</span> • Rank #<span id="user-rank">999</span></p>
+            <progress id="level-progress" value="0" max="100"></progress>
+            <div class="profile-stats">
+              <div>
+                <span id="cars-owned" class="stat-value">0</span>
+                <span class="stat-label">Cars Owned</span>
+              </div>
+              <div>
+                <span id="garage-value" class="stat-value">0</span>
+                <span class="stat-label">Garage Value</span>
+              </div>
+              <div>
+                <span id="race-wins" class="stat-value">0</span>
+                <span class="stat-label">Races Won</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <h3>Achievements</h3>
+          <div class="grid achievements">
+            <div class="achievement" data-achievement="first-ride">🏁 First Ride<br /><small>Get your first car</small></div>
+            <div class="achievement" data-achievement="speed-demon">⚡ Speed Demon<br /><small>Win 10 races</small></div>
+            <div class="achievement" data-achievement="collector">🧑‍🏭 Collector<br /><small>Own 5 cars</small></div>
+          </div>
+        </div>
+        <div class="card">
+          <h3>Local Leaderboard</h3>
+          <ol id="leaderboard-list" class="leaderboard-list"></ol>
+        </div>
+      </section>
+    </div>
   </main>
 
   <div id="box-modal" class="box-modal" aria-hidden="true">
@@ -157,10 +286,10 @@
   </div>
 
   <nav class="bottom-nav">
-    <button class="nav-item active" data-section="garage">🏠 Garage</button>
-    <button class="nav-item" data-section="shop">🛒 Shop</button>
-    <button class="nav-item" data-section="races">⚡ Races</button>
-    <button class="nav-item" data-section="profile">👤 Profile</button>
+    <button class="nav-item active" data-section="garage">🏠<span>Garage</span></button>
+    <button class="nav-item" data-section="shop">🛒<span>Shop</span></button>
+    <button class="nav-item" data-section="races">⚡<span>Races</span></button>
+    <button class="nav-item" data-section="profile">👤<span>Profile</span></button>
   </nav>
 
   <script src="app.js"></script>
