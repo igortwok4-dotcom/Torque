@@ -9,6 +9,7 @@
   }
 
   const XP_PER_LEVEL = 1000;
+  const MIN_STAKE = 2000;
   const STORAGE_KEYS = {
     torque: 'torque',
     cars: 'cars',
@@ -18,7 +19,8 @@
     xp: 'xp',
     raceWins: 'raceWins',
     achievements: 'achievements',
-    leaderboard: 'leaderboard'
+    leaderboard: 'leaderboard',
+    raceStake: 'raceStake'
   };
 
   const carImages = [
@@ -43,6 +45,7 @@
     raceWins: Number(localStorage.getItem(STORAGE_KEYS.raceWins) || '0'),
     achievements: JSON.parse(localStorage.getItem(STORAGE_KEYS.achievements) || '[]'),
     leaderboard: JSON.parse(localStorage.getItem(STORAGE_KEYS.leaderboard) || '[]'),
+    currentRaceStake: Number(localStorage.getItem(STORAGE_KEYS.raceStake) || '0'),
     isOpeningBox: false
   };
 
@@ -67,6 +70,12 @@
     startRace: document.getElementById('start-race'),
     cashOut: document.getElementById('cash-out-btn'),
     nitro: document.getElementById('nitro-btn'),
+    stakeInput: document.getElementById('stake-input'),
+    stakeBalance: document.getElementById('stake-balance'),
+    stakeDisplay: document.getElementById('stake-display'),
+    stakeQuick2000: document.getElementById('stake-quick-2000'),
+    stakeQuick5000: document.getElementById('stake-quick-5000'),
+    stakeMax: document.getElementById('stake-max'),
     boxModal: document.getElementById('box-modal'),
     revealCar: document.getElementById('reveal-car'),
     newCarImg: document.getElementById('new-car-img'),
@@ -107,6 +116,7 @@
     if (!elements.balance) return;
     elements.balance.textContent = `$TORQUE ${state.torque.toLocaleString()}`;
     localStorage.setItem(STORAGE_KEYS.torque, String(state.torque));
+    updateStakeUI();
   }
 
   function accrueIncome() {
@@ -313,6 +323,76 @@
     updateLeaderboard(username);
   }
 
+  function parseStakeValue(raw) {
+    const normalized = String(raw || '').replace(/[^0-9]/g, '');
+    const value = Number(normalized);
+    if (!Number.isFinite(value) || value <= 0) return 0;
+    return Math.floor(value);
+  }
+
+  function getCurrentStakeInput() {
+    if (!elements.stakeInput) return 0;
+    return parseStakeValue(elements.stakeInput.value);
+  }
+
+  function isStakeValid(value) {
+    return value >= MIN_STAKE && value <= state.torque;
+  }
+
+  function updateStakeUI() {
+    if (elements.stakeBalance) {
+      elements.stakeBalance.textContent = `Balance: ${state.torque.toLocaleString()} $TORQUE`;
+    }
+
+    if (elements.stakeDisplay) {
+      const displayValue = state.currentRaceStake || getCurrentStakeInput();
+      elements.stakeDisplay.textContent = `Stake: ${displayValue.toLocaleString()} $TORQUE`;
+    }
+
+    if (elements.startRace) {
+      const stakeValue = getCurrentStakeInput();
+      const isValid = isStakeValid(stakeValue) && !raceGameRunning;
+      elements.startRace.disabled = !isValid;
+    }
+  }
+
+  function setStakeInputValue(value) {
+    if (!elements.stakeInput) return;
+    elements.stakeInput.value = value > 0 ? String(value) : '';
+    updateStakeUI();
+  }
+
+  function generateCrashPoint() {
+    const roll = Math.random();
+    let min = 1.01;
+    let max = 3;
+
+    if (roll < 0.6) {
+      min = 1.01;
+      max = 3;
+    } else if (roll < 0.75) {
+      min = 3;
+      max = 5;
+    } else if (roll < 0.9) {
+      min = 5;
+      max = 10;
+    } else if (roll < 0.95) {
+      min = 10;
+      max = 15;
+    } else if (roll < 0.995) {
+      min = 15;
+      max = 20;
+    } else {
+      min = 20;
+      max = 30;
+    }
+
+    const bias = 2.2;
+    const u = Math.pow(Math.random(), bias);
+    const value = min + (max - min) * u;
+    return Math.max(1.01, Number(value.toFixed(2)));
+  }
+
   function showSection(id) {
     if (!state.isWalletConnected && id !== 'onboarding') {
       alert('Please connect your TON wallet first.');
@@ -337,6 +417,7 @@
 
     if (id === 'races') {
       activateRaceCanvas();
+      updateStakeUI();
     } else {
       deactivateRaceCanvas();
     }
@@ -394,7 +475,9 @@
     ctx.fillRect(elements.raceCanvas.width / 2 - 40, elements.raceCanvas.height - 120, 80, 40);
 
     if (raceGameRunning) {
-      multiplier += delta * (nitroActive ? 0.85 : 0.25);
+      const baseGrowth = 0.22;
+      const nitroBoost = nitroActive ? 0.4 : 0;
+      multiplier += delta * (baseGrowth + nitroBoost);
       if (multiplier >= crashPoint) {
         multiplier = crashPoint;
         raceGameRunning = false;
@@ -413,23 +496,64 @@
   }
 
   function startRace() {
+    if (raceGameRunning) return;
+    if (!state.isWalletConnected) {
+      alert('Connect your TON wallet first.');
+      return;
+    }
+
+    accrueIncome();
+    syncTorqueUI();
+
+    const stakeValue = getCurrentStakeInput();
+    if (!Number.isFinite(stakeValue) || stakeValue <= 0) {
+      alert('Enter a valid stake.');
+      return;
+    }
+
+    if (!Number.isInteger(stakeValue)) {
+      alert('Stake must be a whole number.');
+      return;
+    }
+
+    if (stakeValue < MIN_STAKE) {
+      alert(`Minimum stake is ${MIN_STAKE.toLocaleString()} $TORQUE.`);
+      return;
+    }
+
+    if (stakeValue > state.torque) {
+      alert('Stake cannot exceed your balance.');
+      return;
+    }
+
     if (state.cars.length === 0) {
       alert('Open a box to get your first car before racing.');
       return;
     }
+
+    state.torque -= stakeValue;
+    syncTorqueUI();
+    state.currentRaceStake = stakeValue;
+    localStorage.setItem(STORAGE_KEYS.raceStake, String(stakeValue));
+
     raceGameRunning = true;
     multiplier = 1;
-    crashPoint = 1 + Math.random() * 18 + Math.random() * 6;
+    crashPoint = generateCrashPoint();
+
+    if (elements.stakeInput) elements.stakeInput.disabled = true;
     if (elements.startRace) elements.startRace.style.display = 'none';
     if (elements.nitro) elements.nitro.style.display = 'block';
     if (elements.cashOut) elements.cashOut.style.display = 'block';
+
+    updateStakeUI();
   }
 
   function cashOut() {
     if (!raceGameRunning) return;
     raceGameRunning = false;
-    const reward = Math.floor(1000 * multiplier);
-    state.torque += reward;
+
+    const payout = Math.floor(state.currentRaceStake * multiplier);
+    state.torque += payout;
     state.raceWins += 1;
     localStorage.setItem(STORAGE_KEYS.raceWins, String(state.raceWins));
     addXP(300 + Math.floor(multiplier * 50));
@@ -438,13 +562,20 @@
     endRace(true, false);
   }
 
+  function resetRaceStake() {
+    state.currentRaceStake = 0;
+    localStorage.removeItem(STORAGE_KEYS.raceStake);
+    if (elements.stakeInput) elements.stakeInput.disabled = false;
+    updateStakeUI();
+  }
+
   function endRace(success, crashed) {
     if (elements.startRace) elements.startRace.style.display = 'block';
     if (elements.nitro) elements.nitro.style.display = 'none';
     if (elements.cashOut) elements.cashOut.style.display = 'none';
 
     if (crashed) {
-      alert(`Crash at ${multiplier.toFixed(2)}x! Better luck next time.`);
+      alert(`Crash at ${multiplier.toFixed(2)}x! Stake lost.`);
       TelegramApp?.HapticFeedback?.notificationOccurred('error');
     } else if (success) {
       alert(`Cash out at ${multiplier.toFixed(2)}x!`);
@@ -452,6 +583,7 @@
     }
 
     multiplier = 1;
+    resetRaceStake();
   }
 
   function activateRaceCanvas() {
@@ -472,6 +604,7 @@
     if (elements.nitro) elements.nitro.style.display = 'none';
     if (elements.cashOut) elements.cashOut.style.display = 'none';
     if (elements.multiplier) elements.multiplier.textContent = '1.00x';
+    resetRaceStake();
   }
 
   function openBoxModal() {
@@ -595,6 +728,36 @@
     });
   }
 
+  function setupRaceStakeControls() {
+    if (elements.stakeInput) {
+      elements.stakeInput.addEventListener('input', () => {
+        const value = parseStakeValue(elements.stakeInput.value);
+        if (String(value) !== elements.stakeInput.value && elements.stakeInput.value !== '') {
+          elements.stakeInput.value = value > 0 ? String(value) : '';
+        }
+        updateStakeUI();
+      });
+    }
+
+    if (elements.stakeQuick2000) {
+      elements.stakeQuick2000.addEventListener('click', () => {
+        setStakeInputValue(getCurrentStakeInput() + 2000);
+      });
+    }
+
+    if (elements.stakeQuick5000) {
+      elements.stakeQuick5000.addEventListener('click', () => {
+        setStakeInputValue(getCurrentStakeInput() + 5000);
+      });
+    }
+
+    if (elements.stakeMax) {
+      elements.stakeMax.addEventListener('click', () => {
+        setStakeInputValue(state.torque);
+      });
+    }
+  }
+
   function setupEvents() {
     elements.navItems.forEach((item) => {
       item.addEventListener('click', () => showSection(item.dataset.section));
@@ -680,10 +843,15 @@
     applyAchievementClasses();
     updateProfile();
     setupShop();
+    setupRaceStakeControls();
     setupEvents();
 
     if (state.isWalletConnected) {
       showSection('garage');
+    }
+
+    if (state.currentRaceStake && elements.stakeInput) {
+      setStakeInputValue(state.currentRaceStake);
     }
 
     setInterval(() => {
