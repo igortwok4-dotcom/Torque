@@ -196,12 +196,23 @@
             <span class="chip chip-compact">3 Nitro Boosts</span>
             <span class="chip chip-compact">5x Max Combo</span>
           </div>
+          <div class="stake-panel">
+            <label for="stake-input" class="stake-label">Stake ($TORQUE)</label>
+            <input id="stake-input" type="number" min="2000" step="1" placeholder="min 2000" />
+            <div class="stake-actions">
+              <button class="chip chip-action" id="stake-quick-2000" type="button">+2000</button>
+              <button class="chip chip-action" id="stake-quick-5000" type="button">+5000</button>
+              <button class="chip chip-action" id="stake-max" type="button">Max</button>
+            </div>
+            <div class="stake-balance" id="stake-balance">Balance: 0 $TORQUE</div>
+            <div class="stake-live" id="stake-display">Stake: 0 $TORQUE</div>
+          </div>
           <div class="multiplier" id="multiplier">1.00x</div>
           <div class="race-controls">
             <button class="btn" id="nitro-btn" style="display:none;">Nitro Boost</button>
             <button class="btn" id="cash-out-btn" style="display:none;">Cash Out</button>
           </div>
-          <button class="btn" id="start-race">Start Race</button>
+          <button class="btn" id="start-race" disabled>Start Race</button>
         </div>
 
         <div class="section-header">
