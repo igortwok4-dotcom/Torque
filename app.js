@@ -26,7 +26,13 @@
     raceWins: 'raceWins',
     achievements: 'achievements',
     leaderboard: 'leaderboard',
-    raceStake: 'raceStake'
+    raceStake: 'raceStake',
+    garageSlots: 'garageSlots',
+    incomeBoostEndsAt: 'incomeBoostEndsAt',
+    autoCollectEndsAt: 'autoCollectEndsAt',
+    tonBalance: 'tonBalance',
+    starsBalance: 'starsBalance',
+    withdrawHistory: 'withdrawHistory'
   };
 
   const carCatalog = [
@@ -46,32 +52,84 @@
   const carImages = carCatalog.map((car) => car.img);
   const fallbackCarImage = 'assets/cars/fallback.svg';
 
-  const state = {
-    torque: Number(localStorage.getItem(STORAGE_KEYS.torque) || '0'),
+  const defaultState = {
+    torque: 0,
     incomePerHour: 0,
-    lastUpdate: Number(localStorage.getItem(STORAGE_KEYS.lastUpdate) || Date.now()),
-    cars: JSON.parse(localStorage.getItem(STORAGE_KEYS.cars) || '[]'),
-    isWalletConnected: localStorage.getItem(STORAGE_KEYS.walletConnected) === 'true',
-    level: Number(localStorage.getItem(STORAGE_KEYS.level) || '1'),
-    xp: Number(localStorage.getItem(STORAGE_KEYS.xp) || '0'),
-    raceWins: Number(localStorage.getItem(STORAGE_KEYS.raceWins) || '0'),
-    achievements: JSON.parse(localStorage.getItem(STORAGE_KEYS.achievements) || '[]'),
-    leaderboard: JSON.parse(localStorage.getItem(STORAGE_KEYS.leaderboard) || '[]'),
-    currentRaceStake: Number(localStorage.getItem(STORAGE_KEYS.raceStake) || '0'),
+    lastUpdate: Date.now(),
+    cars: [],
+    isWalletConnected: false,
+    level: 1,
+    xp: 0,
+    raceWins: 0,
+    achievements: [],
+    leaderboard: [],
+    currentRaceStake: 0,
     dragStake: 0,
     dragSelectedCars: [],
     dragRaceRunning: false,
     dragWinner: null,
-    isOpeningBox: false
+    isOpeningBox: false,
+    garageSlots: 6,
+    incomeBoostEndsAt: 0,
+    autoCollectEndsAt: 0,
+    tonBalance: 2.45,
+    starsBalance: 500,
+    withdrawHistory: [],
+    selectedCarIndex: null
   };
 
-  localStorage.setItem(STORAGE_KEYS.lastUpdate, String(state.lastUpdate));
+  function loadState() {
+    const stored = {
+      torque: Number(localStorage.getItem(STORAGE_KEYS.torque)),
+      cars: JSON.parse(localStorage.getItem(STORAGE_KEYS.cars) || '[]'),
+      lastUpdate: Number(localStorage.getItem(STORAGE_KEYS.lastUpdate)),
+      isWalletConnected: localStorage.getItem(STORAGE_KEYS.walletConnected) === 'true',
+      level: Number(localStorage.getItem(STORAGE_KEYS.level)),
+      xp: Number(localStorage.getItem(STORAGE_KEYS.xp)),
+      raceWins: Number(localStorage.getItem(STORAGE_KEYS.raceWins)),
+      achievements: JSON.parse(localStorage.getItem(STORAGE_KEYS.achievements) || '[]'),
+      leaderboard: JSON.parse(localStorage.getItem(STORAGE_KEYS.leaderboard) || '[]'),
+      currentRaceStake: Number(localStorage.getItem(STORAGE_KEYS.raceStake)),
+      garageSlots: Number(localStorage.getItem(STORAGE_KEYS.garageSlots)),
+      incomeBoostEndsAt: Number(localStorage.getItem(STORAGE_KEYS.incomeBoostEndsAt)),
+      autoCollectEndsAt: Number(localStorage.getItem(STORAGE_KEYS.autoCollectEndsAt)),
+      tonBalance: Number(localStorage.getItem(STORAGE_KEYS.tonBalance)),
+      starsBalance: Number(localStorage.getItem(STORAGE_KEYS.starsBalance)),
+      withdrawHistory: JSON.parse(localStorage.getItem(STORAGE_KEYS.withdrawHistory) || '[]')
+    };
+
+    return {
+      ...defaultState,
+      ...Object.fromEntries(
+        Object.entries(stored).filter(([, value]) => value !== null && !Number.isNaN(value))
+      )
+    };
+  }
+
+  function saveState(key, value) {
+    if (Array.isArray(value) || typeof value === 'object') {
+      localStorage.setItem(key, JSON.stringify(value));
+    } else {
+      localStorage.setItem(key, String(value));
+    }
+  }
+
+  const state = loadState();
+
+  if (!state.lastUpdate) {
+    state.lastUpdate = Date.now();
+  }
+  saveState(STORAGE_KEYS.lastUpdate, state.lastUpdate);
+  saveState(STORAGE_KEYS.garageSlots, state.garageSlots);
+  saveState(STORAGE_KEYS.tonBalance, state.tonBalance);
+  saveState(STORAGE_KEYS.starsBalance, state.starsBalance);
 
   const elements = {
     balance: document.getElementById('balance'),
     connectWallet: document.getElementById('connect-wallet'),
     collect: document.getElementById('collect'),
     incomeDisplay: document.getElementById('income-display'),
+    garageStatus: document.getElementById('garage-status'),
     garageGrid: document.getElementById('garage-grid'),
     garageHint: document.getElementById('garage-hint'),
     navItems: document.querySelectorAll('.nav-item'),
@@ -92,6 +150,7 @@
     stakeQuick2000: document.getElementById('stake-quick-2000'),
     stakeQuick5000: document.getElementById('stake-quick-5000'),
     stakeMax: document.getElementById('stake-max'),
+    tonBalance: document.getElementById('ton-balance'),
     raceTab: document.getElementById('race-tab'),
     dragTab: document.getElementById('drag-tab'),
     raceGame: document.getElementById('race-game'),
@@ -109,6 +168,11 @@
     dragModalText: document.getElementById('drag-modal-text'),
     dragClose: document.getElementById('drag-close'),
     dragAgain: document.getElementById('drag-again'),
+    buyIncomeBoost: document.getElementById('buy-income-boost'),
+    buyGarageSlot: document.getElementById('buy-garage-slot'),
+    buyAutoCollect: document.getElementById('buy-auto-collect'),
+    incomeBoostStatus: document.getElementById('income-boost-status'),
+    autoCollectStatus: document.getElementById('auto-collect-status'),
     boxModal: document.getElementById('box-modal'),
     revealCar: document.getElementById('reveal-car'),
     newCarImg: document.getElementById('new-car-img'),
@@ -123,7 +187,19 @@
     carsOwned: document.getElementById('cars-owned'),
     garageValue: document.getElementById('garage-value'),
     raceWins: document.getElementById('race-wins'),
-    leaderboardList: document.getElementById('leaderboard-list')
+    leaderboardList: document.getElementById('leaderboard-list'),
+    sellCar: document.getElementById('sell-car'),
+    goWithdraw: document.getElementById('go-withdraw'),
+    backToProfile: document.getElementById('back-to-profile'),
+    withdrawAmount: document.getElementById('withdraw-amount'),
+    withdrawSubmit: document.getElementById('withdraw-submit'),
+    withdrawError: document.getElementById('withdraw-error'),
+    withdrawBalance: document.getElementById('withdraw-balance'),
+    walletStatus: document.getElementById('wallet-status'),
+    modalOverlay: document.getElementById('modal-overlay'),
+    modalTitle: document.getElementById('modal-title'),
+    modalMessage: document.getElementById('modal-message'),
+    modalActions: document.getElementById('modal-actions')
   };
 
   const tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
@@ -160,12 +236,89 @@
     return carImages[Math.floor(Math.random() * carImages.length)];
   }
 
+  function formatTRQ(value) {
+    return `${value.toLocaleString()} ${TOKEN_TICKER}`;
+  }
+
+  function formatTON(value) {
+    return `TON ${Number(value).toFixed(2)}`;
+  }
+
+  function formatDuration(ms) {
+    const totalMinutes = Math.max(0, Math.floor(ms / 60000));
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
+    if (hours > 0) {
+      return `${hours}h ${minutes}m`;
+    }
+    return `${minutes}m`;
+  }
+
+  function isBoostActive() {
+    return Date.now() < state.incomeBoostEndsAt;
+  }
+
+  function isAutoCollectActive() {
+    return Date.now() < state.autoCollectEndsAt;
+  }
+
+  function updateBalances() {
+    if (elements.balance) {
+      elements.balance.textContent = `${TOKEN_TICKER} ${state.torque.toLocaleString()}`;
+    }
+    if (elements.tonBalance) {
+      elements.tonBalance.textContent = formatTON(state.tonBalance);
+    }
+    if (elements.withdrawBalance) {
+      elements.withdrawBalance.textContent = formatTON(state.tonBalance);
+    }
+  }
+
+  function showModal({ title, message, actions }) {
+    if (!elements.modalOverlay || !elements.modalTitle || !elements.modalMessage || !elements.modalActions) {
+      alert(message);
+      return;
+    }
+    elements.modalTitle.textContent = title;
+    elements.modalMessage.textContent = message;
+    elements.modalActions.innerHTML = '';
+    actions.forEach((action) => {
+      const btn = document.createElement('button');
+      btn.className = `btn ${action.variant === 'danger' ? 'btn-danger' : action.variant === 'secondary' ? 'btn-secondary' : ''}`.trim();
+      btn.textContent = action.label;
+      btn.addEventListener('click', () => {
+        hideModal();
+        action.onClick?.();
+      });
+      elements.modalActions.appendChild(btn);
+    });
+    elements.modalOverlay.classList.add('active');
+    elements.modalOverlay.setAttribute('aria-hidden', 'false');
+  }
+
+  function hideModal() {
+    if (!elements.modalOverlay) return;
+    elements.modalOverlay.classList.remove('active');
+    elements.modalOverlay.setAttribute('aria-hidden', 'true');
+  }
+
+  function showMessage(title, message) {
+    showModal({
+      title,
+      message,
+      actions: [{ label: 'OK', variant: 'secondary' }]
+    });
+  }
+
   function syncTorqueUI() {
-    if (!elements.balance) return;
-    elements.balance.textContent = `${TOKEN_TICKER} ${state.torque.toLocaleString()}`;
-    localStorage.setItem(STORAGE_KEYS.torque, String(state.torque));
+    saveState(STORAGE_KEYS.torque, state.torque);
+    updateBalances();
     updateStakeUI();
     updateDragStakeUI();
+  }
+
+  function getIncomeMultiplier() {
+    return isBoostActive() ? 2 : 1;
   }
 
   function accrueIncome() {
@@ -173,15 +326,15 @@
     const now = Date.now();
     const elapsedHours = (now - state.lastUpdate) / 3600000;
     if (elapsedHours <= 0) return;
-    const earned = Math.floor(state.incomePerHour * elapsedHours);
+    const earned = Math.floor(state.incomePerHour * getIncomeMultiplier() * elapsedHours);
     if (earned <= 0) {
       state.lastUpdate = now;
-      localStorage.setItem(STORAGE_KEYS.lastUpdate, String(state.lastUpdate));
+      saveState(STORAGE_KEYS.lastUpdate, state.lastUpdate);
       return;
     }
     state.torque += earned;
     state.lastUpdate = now;
-    localStorage.setItem(STORAGE_KEYS.lastUpdate, String(state.lastUpdate));
+    saveState(STORAGE_KEYS.lastUpdate, state.lastUpdate);
   }
 
   function normalizeCarImages() {
@@ -201,13 +354,34 @@
     }
   }
 
+  function hasFreeSlot() {
+    return state.cars.length < state.garageSlots;
+  }
+
   function renderGarage() {
     normalizeCarImages();
     const totalIncome = state.cars.reduce((sum, car) => sum + car.income, 0);
     state.incomePerHour = totalIncome;
 
     if (elements.incomeDisplay) {
-      elements.incomeDisplay.textContent = `${totalIncome.toLocaleString()} ${TOKEN_TICKER}/hr`;
+      const displayIncome = Math.floor(totalIncome * getIncomeMultiplier());
+      elements.incomeDisplay.textContent = `${displayIncome.toLocaleString()} ${TOKEN_TICKER}/hr`;
+    }
+
+    if (elements.garageStatus) {
+      elements.garageStatus.innerHTML = '';
+      if (isBoostActive()) {
+        const boostBadge = document.createElement('span');
+        boostBadge.className = 'status-badge';
+        boostBadge.textContent = `2x Boost • ${formatDuration(state.incomeBoostEndsAt - Date.now())}`;
+        elements.garageStatus.appendChild(boostBadge);
+      }
+      if (isAutoCollectActive()) {
+        const autoBadge = document.createElement('span');
+        autoBadge.className = 'status-badge';
+        autoBadge.textContent = `Auto-Collect • ${formatDuration(state.autoCollectEndsAt - Date.now())}`;
+        elements.garageStatus.appendChild(autoBadge);
+      }
     }
 
     if (elements.collect) {
@@ -258,7 +432,7 @@
 
       const income = document.createElement('div');
       income.className = 'car-income';
-      income.innerHTML = `<span>⚡</span>${car.income} / hr`;
+      income.innerHTML = `<span>⚡</span>${car.income} ${TOKEN_TICKER}/hr`;
 
       meta.appendChild(title);
       meta.appendChild(income);
@@ -270,7 +444,7 @@
       elements.garageGrid.appendChild(card);
     });
 
-    for (let i = state.cars.length; i < 9; i += 1) {
+    for (let i = state.cars.length; i < state.garageSlots; i += 1) {
       const slot = document.createElement('div');
       slot.className = 'car-card';
       slot.innerHTML = `
@@ -285,9 +459,50 @@
     }
   }
 
+  function renderShop() {
+    if (elements.incomeBoostStatus) {
+      elements.incomeBoostStatus.textContent = isBoostActive()
+        ? `Active • ${formatDuration(state.incomeBoostEndsAt - Date.now())}`
+        : 'Inactive';
+    }
+    if (elements.autoCollectStatus) {
+      elements.autoCollectStatus.textContent = isAutoCollectActive()
+        ? `Active • ${formatDuration(state.autoCollectEndsAt - Date.now())}`
+        : 'Inactive';
+    }
+    if (elements.buyIncomeBoost) {
+      const affordable = state.starsBalance >= 200;
+      elements.buyIncomeBoost.disabled = !affordable || isBoostActive();
+    }
+    if (elements.buyAutoCollect) {
+      const affordable = state.starsBalance >= 300;
+      elements.buyAutoCollect.disabled = !affordable || isAutoCollectActive();
+    }
+    if (elements.buyGarageSlot) {
+      elements.buyGarageSlot.disabled = state.tonBalance < 0.3;
+    }
+  }
+
+  function formatWalletAddress(address) {
+    if (!address) return 'Connect wallet to withdraw.';
+    return `${address.slice(0, 6)}...${address.slice(-4)}`;
+  }
+
+  function renderProfile() {
+    updateProfile();
+    if (elements.walletStatus) {
+      const address = tonConnectUI?.wallet?.account?.address || '';
+      elements.walletStatus.textContent = address
+        ? `Wallet: ${formatWalletAddress(address)}`
+        : 'Connect wallet to withdraw.';
+    }
+    updateBalances();
+  }
+
   function showCarDetail(index) {
     const car = state.cars[index];
     if (!car) return;
+    state.selectedCarIndex = index;
     if (elements.detailImg) {
       elements.detailImg.src = car.img;
       prepareCarImage(elements.detailImg, car.name);
@@ -296,6 +511,53 @@
     if (elements.detailRarity) elements.detailRarity.textContent = `${car.rarity} • Level ${car.level}`;
     if (elements.detailIncome) elements.detailIncome.textContent = `${car.income} ${TOKEN_TICKER}/hr`;
     showSection('car-detail');
+  }
+
+  function getSellPrice(car) {
+    const rarityBase = {
+      Common: 0.01,
+      Rare: 0.03,
+      Epic: 0.08,
+      Legendary: 0.18
+    };
+    const base = rarityBase[car.rarity] || 0.01;
+    const levelBonus = car.level * 0.002;
+    const incomeBonus = car.income / 200000;
+    const price = Math.min(base + levelBonus + incomeBonus, 0.5);
+    return Number(price.toFixed(3));
+  }
+
+  function confirmSellCar() {
+    if (state.selectedCarIndex === null) return;
+    if (raceGameRunning || state.dragRaceRunning || state.isOpeningBox) {
+      showMessage('Action Unavailable', 'Finish the current race or box opening before selling.');
+      return;
+    }
+    const car = state.cars[state.selectedCarIndex];
+    if (!car) return;
+    const price = getSellPrice(car);
+    showModal({
+      title: 'Sell Car',
+      message: `Sell ${car.name} for ${price.toFixed(3)} TON? This cannot be undone.`,
+      actions: [
+        { label: 'Cancel', variant: 'secondary' },
+        {
+          label: 'Sell',
+          variant: 'danger',
+          onClick: () => {
+            state.cars.splice(state.selectedCarIndex, 1);
+            state.tonBalance += price;
+            saveState(STORAGE_KEYS.cars, state.cars);
+            saveState(STORAGE_KEYS.tonBalance, state.tonBalance);
+            state.selectedCarIndex = null;
+            renderGarage();
+            renderProfile();
+            showSection('garage');
+            TelegramApp?.HapticFeedback?.notificationOccurred('success');
+          }
+        }
+      ]
+    });
   }
 
   function addXP(amount) {
@@ -311,8 +573,8 @@
         });
       }
     }
-    localStorage.setItem(STORAGE_KEYS.xp, String(state.xp));
-    localStorage.setItem(STORAGE_KEYS.level, String(state.level));
+    saveState(STORAGE_KEYS.xp, state.xp);
+    saveState(STORAGE_KEYS.level, state.level);
   }
 
   function applyAchievementClasses() {
@@ -335,7 +597,7 @@
     if (state.raceWins >= 10) unlock('speed-demon');
     if (state.cars.length >= 5) unlock('collector');
 
-    localStorage.setItem(STORAGE_KEYS.achievements, JSON.stringify(state.achievements));
+    saveState(STORAGE_KEYS.achievements, state.achievements);
     applyAchievementClasses();
   }
 
@@ -355,7 +617,7 @@
 
     state.leaderboard.sort((a, b) => b.value - a.value);
     state.leaderboard = state.leaderboard.slice(0, 5);
-    localStorage.setItem(STORAGE_KEYS.leaderboard, JSON.stringify(state.leaderboard));
+    saveState(STORAGE_KEYS.leaderboard, state.leaderboard);
 
     if (!elements.leaderboardList) return;
     elements.leaderboardList.innerHTML = '';
@@ -537,8 +799,12 @@
       renderGarage();
     }
 
-    if (id === 'profile') {
-      updateProfile();
+    if (id === 'profile' || id === 'withdraw') {
+      renderProfile();
+    }
+
+    if (id === 'shop') {
+      renderShop();
     }
 
     if (id === 'races') {
@@ -1008,6 +1274,11 @@
     accrueIncome();
     syncTorqueUI();
 
+    if (!hasFreeSlot()) {
+      showMessage('Garage Full', 'You need an extra garage slot or sell a car before opening a new box.');
+      return;
+    }
+
     const cost = Number(btn.dataset.cost || 0);
     if (state.torque < cost) {
       alert(`Not enough ${TOKEN_TICKER}. Win races or wait for passive income.`);
@@ -1037,10 +1308,10 @@
       elements.revealCar.classList.add('show');
 
       state.cars.push(newCar);
-      localStorage.setItem(STORAGE_KEYS.cars, JSON.stringify(state.cars));
+      saveState(STORAGE_KEYS.cars, state.cars);
       renderGarage();
       addXP(200);
-      updateProfile();
+      renderProfile();
 
       if (TelegramApp) {
         TelegramApp.HapticFeedback?.notificationOccurred('success');
@@ -1052,6 +1323,99 @@
     document.querySelectorAll('#shop .btn[data-box]').forEach((btn) => {
       btn.addEventListener('click', handleBoxOpen);
     });
+
+    if (elements.buyIncomeBoost) {
+      elements.buyIncomeBoost.addEventListener('click', () => {
+        if (isBoostActive()) {
+          showMessage('Boost Active', 'Your 2x income boost is already active.');
+          return;
+        }
+        if (state.starsBalance < 200) {
+          showMessage('Not enough Stars', 'You need 200 Stars to buy the 2x income boost.');
+          return;
+        }
+        showModal({
+          title: 'Buy 2x Income Boost',
+          message: 'Activate 2x passive TRQ income for 24 hours for 200 Stars?',
+          actions: [
+            { label: 'Cancel', variant: 'secondary' },
+            {
+              label: 'Buy',
+              onClick: () => {
+                state.starsBalance -= 200;
+                state.incomeBoostEndsAt = Date.now() + 24 * 60 * 60 * 1000;
+                saveState(STORAGE_KEYS.starsBalance, state.starsBalance);
+                saveState(STORAGE_KEYS.incomeBoostEndsAt, state.incomeBoostEndsAt);
+                renderShop();
+                renderGarage();
+                TelegramApp?.HapticFeedback?.notificationOccurred('success');
+              }
+            }
+          ]
+        });
+      });
+    }
+
+    if (elements.buyAutoCollect) {
+      elements.buyAutoCollect.addEventListener('click', () => {
+        if (isAutoCollectActive()) {
+          showMessage('Auto-Collect Active', 'Auto-collect is already active.');
+          return;
+        }
+        if (state.starsBalance < 300) {
+          showMessage('Not enough Stars', 'You need 300 Stars to buy Auto-Collect.');
+          return;
+        }
+        showModal({
+          title: 'Buy Auto-Collect',
+          message: 'Enable Auto-Collect for 7 days for 300 Stars?',
+          actions: [
+            { label: 'Cancel', variant: 'secondary' },
+            {
+              label: 'Buy',
+              onClick: () => {
+                state.starsBalance -= 300;
+                state.autoCollectEndsAt = Date.now() + 7 * 24 * 60 * 60 * 1000;
+                saveState(STORAGE_KEYS.starsBalance, state.starsBalance);
+                saveState(STORAGE_KEYS.autoCollectEndsAt, state.autoCollectEndsAt);
+                renderShop();
+                renderGarage();
+                TelegramApp?.HapticFeedback?.notificationOccurred('success');
+              }
+            }
+          ]
+        });
+      });
+    }
+
+    if (elements.buyGarageSlot) {
+      elements.buyGarageSlot.addEventListener('click', () => {
+        if (state.tonBalance < 0.3) {
+          showMessage('Not enough TON', 'You need 0.30 TON to buy a garage slot.');
+          return;
+        }
+        showModal({
+          title: 'Buy Garage Slot',
+          message: 'Purchase +1 garage slot for 0.30 TON?',
+          actions: [
+            { label: 'Cancel', variant: 'secondary' },
+            {
+              label: 'Buy',
+              onClick: () => {
+                state.tonBalance -= 0.3;
+                state.garageSlots += 1;
+                saveState(STORAGE_KEYS.tonBalance, state.tonBalance);
+                saveState(STORAGE_KEYS.garageSlots, state.garageSlots);
+                updateBalances();
+                renderGarage();
+                renderShop();
+                TelegramApp?.HapticFeedback?.notificationOccurred('success');
+              }
+            }
+          ]
+        });
+      });
+    }
   }
 
   function setupRaceStakeControls() {
@@ -1162,14 +1526,22 @@
       elements.backToGarage.addEventListener('click', () => showSection('garage'));
     }
 
+    if (elements.goWithdraw) {
+      elements.goWithdraw.addEventListener('click', () => showSection('withdraw'));
+    }
+
+    if (elements.backToProfile) {
+      elements.backToProfile.addEventListener('click', () => showSection('profile'));
+    }
+
     if (elements.connectWallet) {
       elements.connectWallet.addEventListener('click', async () => {
         try {
           await tonConnectUI.connectWallet();
           state.isWalletConnected = true;
-          localStorage.setItem(STORAGE_KEYS.walletConnected, 'true');
+          saveState(STORAGE_KEYS.walletConnected, 'true');
           state.lastUpdate = Date.now();
-          localStorage.setItem(STORAGE_KEYS.lastUpdate, String(state.lastUpdate));
+          saveState(STORAGE_KEYS.lastUpdate, state.lastUpdate);
           showSection('garage');
           syncTorqueUI();
         } catch (error) {
@@ -1185,6 +1557,8 @@
           alert('Connect your TON wallet first.');
           return;
         }
+        accrueIncome();
+        syncTorqueUI();
         elements.collect.textContent = 'Collected!';
         setTimeout(() => {
           elements.collect.textContent = 'Collect Rewards';
@@ -1195,6 +1569,45 @@
 
     if (elements.startRace) elements.startRace.addEventListener('click', startRace);
     if (elements.cashOut) elements.cashOut.addEventListener('click', cashOut);
+    if (elements.sellCar) elements.sellCar.addEventListener('click', confirmSellCar);
+
+    if (elements.withdrawSubmit) {
+      elements.withdrawSubmit.addEventListener('click', () => {
+        const raw = Number(elements.withdrawAmount?.value || 0);
+        if (!raw || raw <= 0) {
+          if (elements.withdrawError) elements.withdrawError.textContent = 'Enter a valid amount.';
+          return;
+        }
+        if (raw > state.tonBalance) {
+          if (elements.withdrawError) elements.withdrawError.textContent = 'Amount exceeds your TON balance.';
+          return;
+        }
+        if (elements.withdrawError) elements.withdrawError.textContent = '';
+        showModal({
+          title: 'Confirm Withdrawal',
+          message: `Withdraw ${raw.toFixed(2)} TON to your wallet?`,
+          actions: [
+            { label: 'Cancel', variant: 'secondary' },
+            {
+              label: 'Withdraw',
+              onClick: () => {
+                state.tonBalance -= raw;
+                state.withdrawHistory.push({
+                  amount: raw,
+                  date: Date.now()
+                });
+                saveState(STORAGE_KEYS.tonBalance, state.tonBalance);
+                saveState(STORAGE_KEYS.withdrawHistory, state.withdrawHistory);
+                updateBalances();
+                if (elements.withdrawAmount) elements.withdrawAmount.value = '';
+                showMessage('Withdrawal Complete', 'Your TON withdrawal has been recorded.');
+                TelegramApp?.HapticFeedback?.notificationOccurred('success');
+              }
+            }
+          ]
+        });
+      });
+    }
 
     if (elements.nitro) {
       const activateNitro = () => {
@@ -1222,6 +1635,14 @@
       });
     }
 
+    if (elements.modalOverlay) {
+      elements.modalOverlay.addEventListener('click', (event) => {
+        if (event.target === elements.modalOverlay) {
+          hideModal();
+        }
+      });
+    }
+
     window.addEventListener('resize', () => {
       const racesActive = document.getElementById('races')?.classList.contains('active');
       if (racesActive) resizeRaceCanvas();
@@ -1232,7 +1653,7 @@
     renderGarage();
     syncTorqueUI();
     applyAchievementClasses();
-    updateProfile();
+    renderProfile();
     setupShop();
     setupRaceStakeControls();
     setupDragControls();
@@ -1240,6 +1661,8 @@
     updateDragChips();
     updateDragStakeUI();
     resetDragBars();
+    renderShop();
+    updateBalances();
 
     if (state.isWalletConnected) {
       showSection('garage');
@@ -1252,6 +1675,8 @@
     setInterval(() => {
       accrueIncome();
       syncTorqueUI();
+      renderShop();
+      renderGarage();
     }, 5000);
   }
 
