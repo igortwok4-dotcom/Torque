@@ -184,64 +184,108 @@
       </section>
 
       <section id="races" class="section">
-        <div class="card race-card">
-          <h2>Neon Drift Race</h2>
-          <p class="muted">Drift through the neon highway and earn $TORQUE!</p>
-          <div class="race-preview">
-            <canvas id="race-canvas"></canvas>
-            <div class="ready-text">READY</div>
-          </div>
-          <div class="stat-chips">
-            <span class="chip chip-compact">30s Duration</span>
-            <span class="chip chip-compact">3 Nitro Boosts</span>
-            <span class="chip chip-compact">5x Max Combo</span>
-          </div>
-          <div class="stake-panel">
-            <label for="stake-input" class="stake-label">Stake ($TORQUE)</label>
-            <input id="stake-input" type="number" min="2000" step="1" placeholder="min 2000" />
-            <div class="stake-actions">
-              <button class="chip chip-action" id="stake-quick-2000" type="button">+2000</button>
-              <button class="chip chip-action" id="stake-quick-5000" type="button">+5000</button>
-              <button class="chip chip-action" id="stake-max" type="button">Max</button>
-            </div>
-            <div class="stake-balance" id="stake-balance">Balance: 0 $TORQUE</div>
-            <div class="stake-live" id="stake-display">Stake: 0 $TORQUE</div>
-          </div>
-          <div class="multiplier" id="multiplier">1.00x</div>
-          <div class="race-controls">
-            <button class="btn" id="nitro-btn" style="display:none;">Nitro Boost</button>
-            <button class="btn" id="cash-out-btn" style="display:none;">Cash Out</button>
-          </div>
-          <button class="btn" id="start-race" disabled>Start Race</button>
+        <div class="game-switcher">
+          <button class="chip chip-action chip-active" id="race-tab" type="button">Race</button>
+          <button class="chip chip-action" id="drag-tab" type="button">Drag Race</button>
         </div>
 
-        <div class="section-header">
-          <h3>Today's Top Racers</h3>
+        <div class="race-game" id="race-game">
+          <div class="card race-card">
+            <h2>Neon Drift Race</h2>
+            <p class="muted">Drift through the neon highway and earn $TORQUE!</p>
+            <div class="race-preview">
+              <canvas id="race-canvas"></canvas>
+              <div class="ready-text">READY</div>
+            </div>
+            <div class="stat-chips">
+              <span class="chip chip-compact">30s Duration</span>
+              <span class="chip chip-compact">3 Nitro Boosts</span>
+              <span class="chip chip-compact">5x Max Combo</span>
+            </div>
+            <div class="stake-panel">
+              <label for="stake-input" class="stake-label">Stake ($TORQUE)</label>
+              <input id="stake-input" type="number" min="2000" step="1" placeholder="min 2000" />
+              <div class="stake-actions">
+                <button class="chip chip-action" id="stake-quick-2000" type="button">+2000</button>
+                <button class="chip chip-action" id="stake-quick-5000" type="button">+5000</button>
+                <button class="chip chip-action" id="stake-max" type="button">Max</button>
+              </div>
+              <div class="stake-balance" id="stake-balance">Balance: 0 $TORQUE</div>
+              <div class="stake-live" id="stake-display">Stake: 0 $TORQUE</div>
+            </div>
+            <div class="multiplier" id="multiplier">1.00x</div>
+            <div class="race-controls">
+              <button class="btn" id="nitro-btn" style="display:none;">Nitro Boost</button>
+              <button class="btn" id="cash-out-btn" style="display:none;">Cash Out</button>
+            </div>
+            <button class="btn" id="start-race" disabled>Start Race</button>
+          </div>
+
+          <div class="section-header">
+            <h3>Today's Top Racers</h3>
+          </div>
+          <div class="leaderboard-cards">
+            <div class="leaderboard-row card">
+              <span class="rank-badge gold">1</span>
+              <div>
+                <strong>SpeedDemon</strong>
+                <p class="muted">125 000 pts</p>
+              </div>
+              <span class="chip chip-compact">+5000</span>
+            </div>
+            <div class="leaderboard-row card">
+              <span class="rank-badge silver">2</span>
+              <div>
+                <strong>NeonKing</strong>
+                <p class="muted">98 000 pts</p>
+              </div>
+              <span class="chip chip-compact">+3000</span>
+            </div>
+            <div class="leaderboard-row card">
+              <span class="rank-badge bronze">3</span>
+              <div>
+                <strong>DriftMaster</strong>
+                <p class="muted">87 000 pts</p>
+              </div>
+              <span class="chip chip-compact">+2000</span>
+            </div>
+          </div>
         </div>
-        <div class="leaderboard-cards">
-          <div class="leaderboard-row card">
-            <span class="rank-badge gold">1</span>
-            <div>
-              <strong>SpeedDemon</strong>
-              <p class="muted">125 000 pts</p>
+
+        <div class="drag-game" id="drag-game" hidden>
+          <div class="card">
+            <h2>Drag Race</h2>
+            <p class="muted">Pick 1–2 cars. Winner takes it.</p>
+            <div class="stake-panel">
+              <label for="drag-stake" class="stake-label">Stake ($TORQUE)</label>
+              <input id="drag-stake" type="number" min="3000" step="1" placeholder="min 3000" />
+              <div class="stake-actions">
+                <button class="chip chip-action" id="drag-quick-3000" type="button">+3000</button>
+                <button class="chip chip-action" id="drag-quick-10000" type="button">+10000</button>
+                <button class="chip chip-action" id="drag-max" type="button">Max</button>
+              </div>
+              <div class="stake-balance" id="drag-balance">Balance: 0 $TORQUE</div>
             </div>
-            <span class="chip chip-compact">+5000</span>
+            <div class="drag-picker">
+              <div class="drag-label">Pick your cars (1–2)</div>
+              <div class="drag-options" id="drag-options">
+                <button class="chip chip-action drag-chip" data-car="1" type="button">Car 1</button>
+                <button class="chip chip-action drag-chip" data-car="2" type="button">Car 2</button>
+                <button class="chip chip-action drag-chip" data-car="3" type="button">Car 3</button>
+                <button class="chip chip-action drag-chip" data-car="4" type="button">Car 4</button>
+                <button class="chip chip-action drag-chip" data-car="5" type="button">Car 5</button>
+              </div>
+            </div>
+            <button class="btn" id="drag-start" disabled>Start Drag Race</button>
           </div>
-          <div class="leaderboard-row card">
-            <span class="rank-badge silver">2</span>
-            <div>
-              <strong>NeonKing</strong>
-              <p class="muted">98 000 pts</p>
+          <div class="card drag-track">
+            <div class="drag-bars" id="drag-bars">
+              <div class="drag-bar" data-bar="1"><span>🚗</span><div class="drag-fill"></div></div>
+              <div class="drag-bar" data-bar="2"><span>🚗</span><div class="drag-fill"></div></div>
+              <div class="drag-bar" data-bar="3"><span>🚗</span><div class="drag-fill"></div></div>
+              <div class="drag-bar" data-bar="4"><span>🚗</span><div class="drag-fill"></div></div>
+              <div class="drag-bar" data-bar="5"><span>🚗</span><div class="drag-fill"></div></div>
             </div>
-            <span class="chip chip-compact">+3000</span>
-          </div>
-          <div class="leaderboard-row card">
-            <span class="rank-badge bronze">3</span>
-            <div>
-              <strong>DriftMaster</strong>
-              <p class="muted">87 000 pts</p>
-            </div>
-            <span class="chip chip-compact">+2000</span>
           </div>
         </div>
       </section>
@@ -293,6 +337,18 @@
       <p id="new-car-name"></p>
       <p id="new-car-rarity"></p>
       <button class="btn" id="close-box">Continue</button>
+    </div>
+  </div>
+
+  <div id="drag-modal" class="overlay" aria-hidden="true">
+    <div class="overlay-card">
+      <div class="overlay-icon">🏁</div>
+      <h2 id="drag-modal-title">Starting Drag Race</h2>
+      <p id="drag-modal-text">Starting in 5…</p>
+      <div class="overlay-actions">
+        <button class="btn btn-secondary" id="drag-close">Close</button>
+        <button class="btn" id="drag-again">Play Again</button>
+      </div>
     </div>
   </div>
 
