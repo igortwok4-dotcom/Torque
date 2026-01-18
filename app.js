@@ -15,6 +15,7 @@
   const DRAG_PAYOUT_DOUBLE = 2.25;
   const DRAG_COUNTDOWN_SECONDS = 5;
   const DRAG_RACE_SECONDS = 10;
+  const TOKEN_TICKER = 'TRQ';
   const STORAGE_KEYS = {
     torque: 'torque',
     cars: 'cars',
@@ -28,16 +29,22 @@
     raceStake: 'raceStake'
   };
 
-  const carImages = [
-    'https://i.imgur.com/0k1K0jK.png',
-    'https://i.imgur.com/5v3kWjD.png',
-    'https://i.imgur.com/JpL9Z0Z.png',
-    'https://i.imgur.com/8kL3fRj.png',
-    'https://i.imgur.com/QwL9v5p.png'
+  const carCatalog = [
+    { name: 'Volt Racer', img: 'assets/cars/volt-racer.svg' },
+    { name: 'Turbo Drift', img: 'assets/cars/turbo-drift.svg' },
+    { name: 'Chrome Bullet', img: 'assets/cars/chrome-bullet.svg' },
+    { name: 'Hyper Surge', img: 'assets/cars/hyper-surge.svg' },
+    { name: 'Neon Phantom', img: 'assets/cars/neon-phantom.svg' },
+    { name: 'Cyber Viper', img: 'assets/cars/cyber-viper.svg' },
+    { name: 'Ion Striker', img: 'assets/cars/ion-striker.svg' },
+    { name: 'Ghost Runner', img: 'assets/cars/ghost-runner.svg' },
+    { name: 'Plasma GT', img: 'assets/cars/plasma-gt.svg' },
+    { name: 'Night Comet', img: 'assets/cars/night-comet.svg' }
   ];
 
-  const carNames = ['Volt Racer', 'Turbo Drift', 'Chrome Bullet', 'Hyper Surge', 'Neon Phantom'];
-  const fallbackCarImage = 'assets/car-placeholder.svg';
+  const carNames = carCatalog.map((car) => car.name);
+  const carImages = carCatalog.map((car) => car.img);
+  const fallbackCarImage = 'assets/cars/fallback.svg';
 
   const state = {
     torque: Number(localStorage.getItem(STORAGE_KEYS.torque) || '0'),
@@ -138,9 +145,24 @@
     };
   }
 
+  function prepareCarImage(img, label) {
+    if (!img) return;
+    img.loading = 'lazy';
+    img.decoding = 'async';
+    img.referrerPolicy = 'no-referrer';
+    img.alt = label || 'Car';
+    applyImageFallback(img, label);
+  }
+
+  function getCarImageByName(name) {
+    const entry = carCatalog.find((car) => car.name === name);
+    if (entry) return entry.img;
+    return carImages[Math.floor(Math.random() * carImages.length)];
+  }
+
   function syncTorqueUI() {
     if (!elements.balance) return;
-    elements.balance.textContent = `$TORQUE ${state.torque.toLocaleString()}`;
+    elements.balance.textContent = `${TOKEN_TICKER} ${state.torque.toLocaleString()}`;
     localStorage.setItem(STORAGE_KEYS.torque, String(state.torque));
     updateStakeUI();
     updateDragStakeUI();
@@ -162,12 +184,30 @@
     localStorage.setItem(STORAGE_KEYS.lastUpdate, String(state.lastUpdate));
   }
 
+  function normalizeCarImages() {
+    let updated = false;
+    state.cars = state.cars.map((car) => {
+      const normalizedImg = car.img && car.img.startsWith('assets/cars/')
+        ? car.img
+        : getCarImageByName(car.name);
+      if (normalizedImg !== car.img) {
+        updated = true;
+        return { ...car, img: normalizedImg };
+      }
+      return car;
+    });
+    if (updated) {
+      localStorage.setItem(STORAGE_KEYS.cars, JSON.stringify(state.cars));
+    }
+  }
+
   function renderGarage() {
+    normalizeCarImages();
     const totalIncome = state.cars.reduce((sum, car) => sum + car.income, 0);
     state.incomePerHour = totalIncome;
 
     if (elements.incomeDisplay) {
-      elements.incomeDisplay.textContent = `${totalIncome.toLocaleString()} $TORQUE/hr`;
+      elements.incomeDisplay.textContent = `${totalIncome.toLocaleString()} ${TOKEN_TICKER}/hr`;
     }
 
     if (elements.collect) {
@@ -191,8 +231,7 @@
       const img = document.createElement('img');
       img.className = 'car-img';
       img.src = car.img;
-      img.alt = car.name;
-      applyImageFallback(img, car.name);
+      prepareCarImage(img, car.name);
 
       const badges = document.createElement('div');
       badges.className = 'car-badges';
@@ -244,12 +283,11 @@
     if (!car) return;
     if (elements.detailImg) {
       elements.detailImg.src = car.img;
-      elements.detailImg.alt = car.name;
-      applyImageFallback(elements.detailImg, car.name);
+      prepareCarImage(elements.detailImg, car.name);
     }
     if (elements.detailName) elements.detailName.textContent = car.name;
     if (elements.detailRarity) elements.detailRarity.textContent = `${car.rarity} • Level ${car.level}`;
-    if (elements.detailIncome) elements.detailIncome.textContent = `${car.income} $TORQUE/hr`;
+    if (elements.detailIncome) elements.detailIncome.textContent = `${car.income} ${TOKEN_TICKER}/hr`;
     showSection('car-detail');
   }
 
@@ -324,14 +362,14 @@
   function updateProfile() {
     const user = TelegramApp?.initDataUnsafe?.user || { username: 'Player', first_name: 'Player' };
     const username = user.username || user.first_name || 'Player';
-    const photoUrl = user.photo_url || `https://via.placeholder.com/80/111/00FFFF?text=${username[0]}`;
+    const photoUrl = user.photo_url || 'assets/car-placeholder.svg';
 
     if (elements.userName) elements.userName.textContent = username;
     if (elements.userAvatar) {
       elements.userAvatar.src = photoUrl;
       elements.userAvatar.alt = username;
       elements.userAvatar.onerror = () => {
-        elements.userAvatar.src = 'https://via.placeholder.com/80/111/00FFFF?text=U';
+        elements.userAvatar.src = 'assets/car-placeholder.svg';
       };
     }
     if (elements.userLevel) elements.userLevel.textContent = String(state.level);
@@ -368,12 +406,12 @@
 
   function updateStakeUI() {
     if (elements.stakeBalance) {
-      elements.stakeBalance.textContent = `Balance: ${state.torque.toLocaleString()} $TORQUE`;
+      elements.stakeBalance.textContent = `Balance: ${state.torque.toLocaleString()} ${TOKEN_TICKER}`;
     }
 
     if (elements.stakeDisplay) {
       const displayValue = state.currentRaceStake || getCurrentStakeInput();
-      elements.stakeDisplay.textContent = `Stake: ${displayValue.toLocaleString()} $TORQUE`;
+      elements.stakeDisplay.textContent = `Stake: ${displayValue.toLocaleString()} ${TOKEN_TICKER}`;
     }
 
     if (elements.startRace) {
@@ -391,7 +429,7 @@
 
   function updateDragStakeUI() {
     if (elements.dragBalance) {
-      elements.dragBalance.textContent = `Balance: ${state.torque.toLocaleString()} $TORQUE`;
+      elements.dragBalance.textContent = `Balance: ${state.torque.toLocaleString()} ${TOKEN_TICKER}`;
     }
 
     if (elements.dragStart) {
@@ -600,7 +638,7 @@
     }
 
     if (stakeValue < MIN_STAKE) {
-      alert(`Minimum stake is ${MIN_STAKE.toLocaleString()} $TORQUE.`);
+      alert(`Minimum stake is ${MIN_STAKE.toLocaleString()} ${TOKEN_TICKER}.`);
       return;
     }
 
@@ -799,8 +837,8 @@
     }
 
     const resultText = won
-      ? `You Won +${payout.toLocaleString()} $TORQUE`
-      : `You Lost -${stake.toLocaleString()} $TORQUE`;
+      ? `You Won +${payout.toLocaleString()} ${TOKEN_TICKER}`
+      : `You Lost -${stake.toLocaleString()} ${TOKEN_TICKER}`;
 
     showDragModal('Race Complete!', `Winner: Car #${winner}. ${resultText}`, true);
     updateDragStakeUI();
@@ -832,7 +870,7 @@
 
     const stakeValue = parseStakeValue(elements.dragStakeInput?.value);
     if (!stakeValue || stakeValue < MIN_DRAG_STAKE) {
-      alert(`Minimum stake is ${MIN_DRAG_STAKE.toLocaleString()} $TORQUE.`);
+      alert(`Minimum stake is ${MIN_DRAG_STAKE.toLocaleString()} ${TOKEN_TICKER}.`);
       return;
     }
     if (stakeValue > state.torque) {
@@ -942,12 +980,13 @@
             ? Math.floor(Math.random() * 1200) + 800
             : Math.floor(Math.random() * 2000) + 1200;
 
+    const name = carNames[Math.floor(Math.random() * carNames.length)];
     return {
-      name: carNames[Math.floor(Math.random() * carNames.length)],
+      name,
       rarity,
       level: Math.floor(Math.random() * 10) + 1,
       income,
-      img: carImages[Math.floor(Math.random() * carImages.length)]
+      img: getCarImageByName(name)
     };
   }
 
@@ -964,7 +1003,7 @@
 
     const cost = Number(btn.dataset.cost || 0);
     if (state.torque < cost) {
-      alert('Not enough $TORQUE. Win races or wait for passive income.');
+      alert(`Not enough ${TOKEN_TICKER}. Win races or wait for passive income.`);
       return;
     }
 
@@ -981,12 +1020,11 @@
       if (!elements.revealCar) return;
       if (elements.newCarImg) {
         elements.newCarImg.src = newCar.img;
-        elements.newCarImg.alt = newCar.name;
-        applyImageFallback(elements.newCarImg, newCar.name);
+        prepareCarImage(elements.newCarImg, newCar.name);
       }
       if (elements.newCarName) elements.newCarName.textContent = `${newCar.name} Lv.${newCar.level}`;
       if (elements.newCarRarity) {
-        elements.newCarRarity.textContent = `${newCar.rarity} • +${newCar.income} $TORQUE/hr`;
+        elements.newCarRarity.textContent = `${newCar.rarity} • +${newCar.income} ${TOKEN_TICKER}/hr`;
       }
       elements.revealCar.style.display = 'block';
       elements.revealCar.classList.add('show');
