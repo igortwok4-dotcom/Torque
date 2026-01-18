@@ -165,16 +165,30 @@ main {
   border-radius: 14px;
   overflow: hidden;
   height: 110px;
+  min-height: 110px;
+  aspect-ratio: 16 / 9;
   background: linear-gradient(120deg, rgba(0, 229, 255, 0.15), rgba(180, 0, 255, 0.2));
+  border: 1px solid rgba(0, 229, 255, 0.2);
+  box-shadow: 0 0 14px rgba(0, 229, 255, 0.2);
   margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .car-img {
   width: 100%;
-  height: 100%;
-  object-fit: cover;
+  height: auto;
+  object-fit: contain;
   border-radius: 14px;
   display: block;
+  padding: 6px;
+  box-sizing: border-box;
+  filter: drop-shadow(0 6px 12px rgba(0, 229, 255, 0.25));
+}
+
+.car-image-wrap .car-img {
+  height: 100%;
 }
 
 .img-fallback {
@@ -185,10 +199,11 @@ main {
 
 .car-badges {
   position: absolute;
-  top: 8px;
-  left: 8px;
+  top: 6px;
+  left: 6px;
   display: flex;
   gap: 6px;
+  z-index: 2;
 }
 
 .badge {
@@ -198,6 +213,8 @@ main {
   padding: 4px 6px;
   border-radius: 8px;
   border: 1px solid rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(6px);
+  text-shadow: 0 0 6px rgba(0, 0, 0, 0.6);
 }
 
 .badge.rarity {
