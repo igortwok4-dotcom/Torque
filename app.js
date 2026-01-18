@@ -226,7 +226,7 @@
       card.className = 'car-card';
 
       const imageWrap = document.createElement('div');
-      imageWrap.className = 'car-image-wrap';
+      imageWrap.className = 'car-media';
 
       const img = document.createElement('img');
       img.className = 'car-img';
@@ -249,6 +249,9 @@
       imageWrap.appendChild(img);
       imageWrap.appendChild(badges);
 
+      const meta = document.createElement('div');
+      meta.className = 'car-meta';
+
       const title = document.createElement('div');
       title.className = 'car-title';
       title.textContent = car.name;
@@ -257,9 +260,11 @@
       income.className = 'car-income';
       income.innerHTML = `<span>⚡</span>${car.income} / hr`;
 
+      meta.appendChild(title);
+      meta.appendChild(income);
+
       card.appendChild(imageWrap);
-      card.appendChild(title);
-      card.appendChild(income);
+      card.appendChild(meta);
 
       card.addEventListener('click', () => showCarDetail(index));
       elements.garageGrid.appendChild(card);
@@ -270,8 +275,10 @@
       slot.className = 'car-card';
       slot.innerHTML = `
         <div class="empty-slot">+</div>
-        <div class="car-title">Open Box</div>
-        <div class="car-income">Get a new car</div>
+        <div class="car-meta">
+          <div class="car-title">Open Box</div>
+          <div class="car-income">Get a new car</div>
+        </div>
       `;
       slot.addEventListener('click', () => showSection('shop'));
       elements.garageGrid.appendChild(slot);
