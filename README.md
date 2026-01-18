@@ -58,11 +58,11 @@ https://YOUR-VERCEL-DOMAIN/tonconnect-manifest.json
 
 After deployment, replace `YOUR-VERCEL-DOMAIN` with your real Vercel domain.
 
+## Local Car Artwork
+
+Car artwork is bundled locally in `public/assets/cars`. The app does not rely on external image hosting for car images, so it works offline and inside Telegram’s in-app webview without broken thumbnails.
+
 ## Notes
 
 - All progress is saved in the browser’s `localStorage`.
 - No automatic reset is performed on startup.
-
-- All progress is saved in the browser’s `localStorage`.
-- No automatic reset is performed on startup.
-
