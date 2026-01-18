@@ -1,7 +1,7 @@
 {␊
   "url": "https://torquesh.vercel.app",␊
   "name": "Torque",␊
-  "iconUrl": "https://via.placeholder.com/128/0B0B0F/00FFFF?text=TORQUE",␊
+  "iconUrl": "assets/car-placeholder.svg",
   "termsOfUseUrl": "",␊
   "privacyPolicyUrl": ""␊
 }
