@@ -17,7 +17,7 @@
       <div class="logo">TORQUE</div>
     </div>
     <div class="header-right">
-      <div class="chip chip-balance" id="balance">$TORQUE 0</div>
+      <div class="chip chip-balance" id="balance">TRQ 0</div>
       <div class="chip chip-ton">TON 2.45</div>
     </div>
   </header>
@@ -51,7 +51,7 @@
       <section id="garage" class="section">
         <div class="card earnings-card">
           <div class="card-title">Passive Earnings</div>
-          <div class="income" id="income-display">0 $TORQUE/hr</div>
+          <div class="income" id="income-display">0 TRQ/hr</div>
           <button class="btn collect-btn" id="collect" style="display:none;">Collect Rewards</button>
         </div>
         <p id="garage-hint" class="hint">Open your first box in Shop to start earning!</p>
@@ -66,13 +66,13 @@
       <section id="car-detail" class="section">
         <button class="back-btn" id="back-to-garage">← Back</button>
         <div class="card">
-          <img class="car-img" id="detail-img" src="" alt="" />
+          <img class="car-img" id="detail-img" src="" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer" />
           <div class="detail-header">
             <h2 id="detail-name">Car Name</h2>
             <p id="detail-rarity">Rarity • Level</p>
           </div>
           <div class="detail-meta">
-            <span class="chip chip-compact" id="detail-income">0 $TORQUE/hr</span>
+            <span class="chip chip-compact" id="detail-income">0 TRQ/hr</span>
             <button class="btn btn-secondary" id="stake-btn">Stake for +50%</button>
           </div>
         </div>
@@ -115,7 +115,7 @@
               <p>60% Common, 30% Rare, 10% Epic</p>
             </div>
             <div class="shop-actions">
-              <div class="chip chip-compact">5000 $TORQUE</div>
+              <div class="chip chip-compact">5000 TRQ</div>
               <button class="btn btn-small" data-box="common" data-cost="5000">Open</button>
             </div>
           </div>
@@ -126,7 +126,7 @@
               <p>40% Rare, 40% Epic, 20% Legendary</p>
             </div>
             <div class="shop-actions">
-              <div class="chip chip-compact">15000 $TORQUE</div>
+              <div class="chip chip-compact">15000 TRQ</div>
               <button class="btn btn-small" data-box="rare" data-cost="15000">Open</button>
             </div>
           </div>
@@ -137,7 +137,7 @@
               <p>50% Epic, 50% Legendary</p>
             </div>
             <div class="shop-actions">
-              <div class="chip chip-compact">50000 $TORQUE</div>
+              <div class="chip chip-compact">50000 TRQ</div>
               <button class="btn btn-small" data-box="epic" data-cost="50000">Open</button>
             </div>
           </div>
@@ -192,7 +192,7 @@
         <div class="race-game" id="race-game">
           <div class="card race-card">
             <h2>Neon Drift Race</h2>
-            <p class="muted">Drift through the neon highway and earn $TORQUE!</p>
+            <p class="muted">Drift through the neon highway and earn TRQ!</p>
             <div class="race-preview">
               <canvas id="race-canvas"></canvas>
               <div class="ready-text">READY</div>
@@ -203,15 +203,15 @@
               <span class="chip chip-compact">5x Max Combo</span>
             </div>
             <div class="stake-panel">
-              <label for="stake-input" class="stake-label">Stake ($TORQUE)</label>
+              <label for="stake-input" class="stake-label">Stake (TRQ)</label>
               <input id="stake-input" type="number" min="2000" step="1" placeholder="min 2000" />
               <div class="stake-actions">
                 <button class="chip chip-action" id="stake-quick-2000" type="button">+2000</button>
                 <button class="chip chip-action" id="stake-quick-5000" type="button">+5000</button>
                 <button class="chip chip-action" id="stake-max" type="button">Max</button>
               </div>
-              <div class="stake-balance" id="stake-balance">Balance: 0 $TORQUE</div>
-              <div class="stake-live" id="stake-display">Stake: 0 $TORQUE</div>
+              <div class="stake-balance" id="stake-balance">Balance: 0 TRQ</div>
+              <div class="stake-live" id="stake-display">Stake: 0 TRQ</div>
             </div>
             <div class="multiplier" id="multiplier">1.00x</div>
             <div class="race-controls">
@@ -257,14 +257,14 @@
             <h2>Drag Race</h2>
             <p class="muted">Pick 1–2 cars. Winner takes it.</p>
             <div class="stake-panel">
-              <label for="drag-stake" class="stake-label">Stake ($TORQUE)</label>
+              <label for="drag-stake" class="stake-label">Stake (TRQ)</label>
               <input id="drag-stake" type="number" min="3000" step="1" placeholder="min 3000" />
               <div class="stake-actions">
                 <button class="chip chip-action" id="drag-quick-3000" type="button">+3000</button>
                 <button class="chip chip-action" id="drag-quick-10000" type="button">+10000</button>
                 <button class="chip chip-action" id="drag-max" type="button">Max</button>
               </div>
-              <div class="stake-balance" id="drag-balance">Balance: 0 $TORQUE</div>
+              <div class="stake-balance" id="drag-balance">Balance: 0 TRQ</div>
             </div>
             <div class="drag-picker">
               <div class="drag-label">Pick your cars (1–2)</div>
@@ -292,7 +292,7 @@
 
       <section id="profile" class="section">
         <div class="card profile-card">
-          <img class="avatar" id="user-avatar" src="" alt="User avatar" />
+          <img class="avatar" id="user-avatar" src="" alt="User avatar" loading="lazy" decoding="async" referrerpolicy="no-referrer" />
           <div>
             <h2 id="user-name">Player</h2>
             <p>Level <span id="user-level">1</span> • Rank #<span id="user-rank">999</span></p>
@@ -333,7 +333,7 @@
     <div class="box box-rotating"></div>
     <p class="box-status">Opening...</p>
     <div id="reveal-car" class="reveal" style="display:none;">
-      <img id="new-car-img" src="" alt="New car" />
+      <img id="new-car-img" src="" alt="New car" loading="lazy" decoding="async" referrerpolicy="no-referrer" />
       <p id="new-car-name"></p>
       <p id="new-car-rarity"></p>
       <button class="btn" id="close-box">Continue</button>
