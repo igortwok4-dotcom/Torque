@@ -271,6 +271,33 @@ main {
   margin-top: 12px;
 }
 
+.status-row {
+  margin-top: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: center;
+}
+
+.status-badge {
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  border: 1px solid rgba(0, 229, 255, 0.3);
+  color: var(--neon-cyan);
+  background: rgba(0, 229, 255, 0.08);
+}
+
+.status-badge.warn {
+  border-color: rgba(255, 122, 0, 0.4);
+  color: #ffb26b;
+}
+
+.btn-danger {
+  background: linear-gradient(90deg, #ff4f6d, #ff7b7b);
+  color: #1b0b10;
+}
+
 .bottom-nav {
   position: fixed;
   bottom: 0;
@@ -391,6 +418,16 @@ main {
   box-shadow: 0 12px 24px rgba(0, 229, 255, 0.3);
   cursor: pointer;
   color: #03121d;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.race-fab svg {
+  width: 30px;
+  height: 30px;
+  fill: #0b0b0f;
 }
 
 .back-btn {
@@ -488,6 +525,12 @@ main {
   flex-direction: column;
   gap: 8px;
   margin-top: 10px;
+}
+
+#sell-price {
+  display: inline-flex;
+  width: fit-content;
+  margin-top: 8px;
 }
 
 .race-card h2 {
@@ -688,6 +731,46 @@ canvas {
   justify-content: center;
   z-index: 3000;
   padding: 24px;
+}
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(7, 10, 18, 0.88);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 4000;
+  padding: 24px;
+}
+
+.modal-overlay.active {
+  display: flex;
+}
+
+.modal-card {
+  width: 100%;
+  max-width: 340px;
+  background: rgba(7, 10, 18, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 18px;
+  padding: 20px;
+  text-align: center;
+  box-shadow: var(--shadow);
+}
+
+.modal-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 16px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.modal-actions .btn {
+  margin-top: 0;
+  width: auto;
+  padding: 10px 16px;
 }
 
 .overlay.active {
@@ -923,6 +1006,10 @@ canvas {
   }
 
   .overlay-actions {
+    flex-direction: column;
+  }
+
+  .modal-actions {
     flex-direction: column;
   }
 }
