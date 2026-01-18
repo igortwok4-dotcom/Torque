@@ -62,3 +62,7 @@ After deployment, replace `YOUR-VERCEL-DOMAIN` with your real Vercel domain.
 
 - All progress is saved in the browser’s `localStorage`.
 - No automatic reset is performed on startup.
+
+- All progress is saved in the browser’s `localStorage`.
+- No automatic reset is performed on startup.
+
