@@ -10,6 +10,11 @@
 
   const XP_PER_LEVEL = 1000;
   const MIN_STAKE = 2000;
+  const MIN_DRAG_STAKE = 3000;
+  const DRAG_PAYOUT_SINGLE = 4.5;
+  const DRAG_PAYOUT_DOUBLE = 2.25;
+  const DRAG_COUNTDOWN_SECONDS = 5;
+  const DRAG_RACE_SECONDS = 10;
   const STORAGE_KEYS = {
     torque: 'torque',
     cars: 'cars',
@@ -46,6 +51,10 @@
     achievements: JSON.parse(localStorage.getItem(STORAGE_KEYS.achievements) || '[]'),
     leaderboard: JSON.parse(localStorage.getItem(STORAGE_KEYS.leaderboard) || '[]'),
     currentRaceStake: Number(localStorage.getItem(STORAGE_KEYS.raceStake) || '0'),
+    dragStake: 0,
+    dragSelectedCars: [],
+    dragRaceRunning: false,
+    dragWinner: null,
     isOpeningBox: false
   };
 
@@ -76,6 +85,23 @@
     stakeQuick2000: document.getElementById('stake-quick-2000'),
     stakeQuick5000: document.getElementById('stake-quick-5000'),
     stakeMax: document.getElementById('stake-max'),
+    raceTab: document.getElementById('race-tab'),
+    dragTab: document.getElementById('drag-tab'),
+    raceGame: document.getElementById('race-game'),
+    dragGame: document.getElementById('drag-game'),
+    dragStakeInput: document.getElementById('drag-stake'),
+    dragQuick3000: document.getElementById('drag-quick-3000'),
+    dragQuick10000: document.getElementById('drag-quick-10000'),
+    dragMax: document.getElementById('drag-max'),
+    dragBalance: document.getElementById('drag-balance'),
+    dragOptions: document.getElementById('drag-options'),
+    dragStart: document.getElementById('drag-start'),
+    dragBars: document.getElementById('drag-bars'),
+    dragModal: document.getElementById('drag-modal'),
+    dragModalTitle: document.getElementById('drag-modal-title'),
+    dragModalText: document.getElementById('drag-modal-text'),
+    dragClose: document.getElementById('drag-close'),
+    dragAgain: document.getElementById('drag-again'),
     boxModal: document.getElementById('box-modal'),
     revealCar: document.getElementById('reveal-car'),
     newCarImg: document.getElementById('new-car-img'),
@@ -117,6 +143,7 @@
     elements.balance.textContent = `$TORQUE ${state.torque.toLocaleString()}`;
     localStorage.setItem(STORAGE_KEYS.torque, String(state.torque));
     updateStakeUI();
+    updateDragStakeUI();
   }
 
   function accrueIncome() {
@@ -362,6 +389,60 @@
     updateStakeUI();
   }
 
+  function updateDragStakeUI() {
+    if (elements.dragBalance) {
+      elements.dragBalance.textContent = `Balance: ${state.torque.toLocaleString()} $TORQUE`;
+    }
+
+    if (elements.dragStart) {
+      const stakeValue = parseStakeValue(elements.dragStakeInput?.value);
+      const isValidStake = stakeValue >= MIN_DRAG_STAKE && stakeValue <= state.torque;
+      const hasSelection = state.dragSelectedCars.length > 0;
+      elements.dragStart.disabled = !isValidStake || !hasSelection || state.dragRaceRunning;
+    }
+  }
+
+  function updateDragChips() {
+    if (!elements.dragOptions) return;
+    elements.dragOptions.querySelectorAll('.drag-chip').forEach((chip) => {
+      const carId = Number(chip.dataset.car);
+      if (state.dragSelectedCars.includes(carId)) {
+        chip.classList.add('selected');
+      } else {
+        chip.classList.remove('selected');
+      }
+    });
+  }
+
+  function resetDragBars() {
+    if (!elements.dragBars) return;
+    elements.dragBars.querySelectorAll('.drag-bar').forEach((bar) => {
+      bar.classList.remove('leading', 'winner');
+      const fill = bar.querySelector('.drag-fill');
+      if (fill) {
+        fill.style.height = '10%';
+      }
+    });
+  }
+
+  function showDragModal(title, message, showActions = false) {
+    if (!elements.dragModal || !elements.dragModalTitle || !elements.dragModalText) return;
+    elements.dragModalTitle.textContent = title;
+    elements.dragModalText.textContent = message;
+    elements.dragModal.classList.add('active');
+    elements.dragModal.setAttribute('aria-hidden', 'false');
+    if (elements.dragClose && elements.dragAgain) {
+      elements.dragClose.style.display = showActions ? 'inline-flex' : 'none';
+      elements.dragAgain.style.display = showActions ? 'inline-flex' : 'none';
+    }
+  }
+
+  function hideDragModal() {
+    if (!elements.dragModal) return;
+    elements.dragModal.classList.remove('active');
+    elements.dragModal.setAttribute('aria-hidden', 'true');
+  }
+
   function generateCrashPoint() {
     const roll = Math.random();
     let min = 1.01;
@@ -418,6 +499,7 @@
     if (id === 'races') {
       activateRaceCanvas();
       updateStakeUI();
+      updateDragStakeUI();
     } else {
       deactivateRaceCanvas();
     }
@@ -430,6 +512,7 @@
   let roadOffset = 0;
   let nitroActive = false;
   let lastFrameTime = 0;
+  let dragInterval = null;
 
   function resizeRaceCanvas() {
     if (!elements.raceCanvas) return;
@@ -607,6 +690,204 @@
     resetRaceStake();
   }
 
+  function startDragCountdown() {
+    let remaining = DRAG_COUNTDOWN_SECONDS;
+    showDragModal('Starting Drag Race', `Starting in ${remaining}…`, false);
+
+    const countdownTimer = setInterval(() => {
+      if (!state.dragRaceRunning) {
+        clearInterval(countdownTimer);
+        return;
+      }
+      remaining -= 1;
+      if (remaining <= 0) {
+        clearInterval(countdownTimer);
+        hideDragModal();
+        runDragRace();
+      } else {
+        showDragModal('Starting Drag Race', `Starting in ${remaining}…`, false);
+      }
+    }, 1000);
+  }
+
+  function computeDragTimeline(winnerIndex) {
+    const ticks = Math.floor(DRAG_RACE_SECONDS * 10);
+    const timeline = Array.from({ length: ticks }, () => Array(5).fill(0));
+    const current = Array(5).fill(10);
+
+    for (let t = 0; t < ticks; t += 1) {
+      for (let i = 0; i < 5; i += 1) {
+        const jitter = Math.random() * 6;
+        const growth = 1 + jitter + (i === winnerIndex ? Math.random() * 2 : 0);
+        current[i] = Math.min(95, current[i] + growth);
+      }
+
+      const leadShift = Math.floor(Math.random() * 5);
+      current[leadShift] = Math.min(95, current[leadShift] + 3 + Math.random() * 4);
+
+      if (t === ticks - 1) {
+        current.forEach((_, i) => {
+          current[i] = 60 + Math.random() * 25;
+        });
+        current[winnerIndex] = 92;
+      }
+
+      timeline[t] = current.map((value) => Math.max(8, Math.min(95, value)));
+    }
+
+    return timeline;
+  }
+
+  function runDragRace() {
+    if (!elements.dragBars) return;
+    const bars = Array.from(elements.dragBars.querySelectorAll('.drag-bar'));
+    resetDragBars();
+
+    const winnerIndex = Math.floor(Math.random() * 5);
+    state.dragWinner = winnerIndex + 1;
+
+    const timeline = computeDragTimeline(winnerIndex);
+    let tick = 0;
+
+    dragInterval = setInterval(() => {
+      if (!state.dragRaceRunning) {
+        clearInterval(dragInterval);
+        return;
+      }
+      const heights = timeline[tick];
+      let lead = 0;
+      heights.forEach((height, idx) => {
+        if (height > heights[lead]) lead = idx;
+        const fill = bars[idx].querySelector('.drag-fill');
+        if (fill) {
+          fill.style.height = `${height}%`;
+        }
+        bars[idx].classList.remove('leading');
+      });
+      bars[lead].classList.add('leading');
+
+      tick += 1;
+      if (tick >= timeline.length) {
+        clearInterval(dragInterval);
+        bars.forEach((bar) => bar.classList.remove('leading'));
+        bars[winnerIndex].classList.add('winner');
+        finishDragRace();
+      }
+    }, 100);
+  }
+
+  function finishDragRace() {
+    state.dragRaceRunning = false;
+    const selected = state.dragSelectedCars;
+    const winner = state.dragWinner;
+    const stake = state.dragStake;
+    const won = selected.includes(winner);
+
+    let payout = 0;
+    if (won) {
+      const multiplierValue = selected.length === 1 ? DRAG_PAYOUT_SINGLE : DRAG_PAYOUT_DOUBLE;
+      payout = Math.floor(stake * multiplierValue);
+      state.torque += payout;
+      addXP(150 + Math.floor(multiplierValue * 50));
+      state.raceWins += 1;
+      localStorage.setItem(STORAGE_KEYS.raceWins, String(state.raceWins));
+      syncTorqueUI();
+      updateProfile();
+      TelegramApp?.HapticFeedback?.notificationOccurred('success');
+    } else {
+      TelegramApp?.HapticFeedback?.notificationOccurred('error');
+    }
+
+    const resultText = won
+      ? `You Won +${payout.toLocaleString()} $TORQUE`
+      : `You Lost -${stake.toLocaleString()} $TORQUE`;
+
+    showDragModal('Race Complete!', `Winner: Car #${winner}. ${resultText}`, true);
+    updateDragStakeUI();
+  }
+
+  function resetDragGame() {
+    state.dragStake = 0;
+    state.dragSelectedCars = [];
+    state.dragWinner = null;
+    state.dragRaceRunning = false;
+    if (elements.dragStakeInput) {
+      elements.dragStakeInput.value = '';
+      elements.dragStakeInput.disabled = false;
+    }
+    updateDragChips();
+    updateDragStakeUI();
+    resetDragBars();
+  }
+
+  function startDragRace() {
+    if (state.dragRaceRunning) return;
+    if (!state.isWalletConnected) {
+      alert('Connect your TON wallet first.');
+      return;
+    }
+
+    accrueIncome();
+    syncTorqueUI();
+
+    const stakeValue = parseStakeValue(elements.dragStakeInput?.value);
+    if (!stakeValue || stakeValue < MIN_DRAG_STAKE) {
+      alert(`Minimum stake is ${MIN_DRAG_STAKE.toLocaleString()} $TORQUE.`);
+      return;
+    }
+    if (stakeValue > state.torque) {
+      alert('Stake cannot exceed your balance.');
+      return;
+    }
+    if (state.dragSelectedCars.length === 0) {
+      alert('Select at least one car.');
+      return;
+    }
+
+    state.torque -= stakeValue;
+    syncTorqueUI();
+
+    state.dragStake = stakeValue;
+    state.dragRaceRunning = true;
+    if (elements.dragStakeInput) elements.dragStakeInput.disabled = true;
+    updateDragStakeUI();
+
+    startDragCountdown();
+  }
+
+  function handleDragSelection(event) {
+    const chip = event.target.closest('.drag-chip');
+    if (!chip || state.dragRaceRunning) return;
+    const carId = Number(chip.dataset.car);
+    if (!carId) return;
+
+    const selected = state.dragSelectedCars;
+    if (selected.includes(carId)) {
+      state.dragSelectedCars = selected.filter((id) => id !== carId);
+    } else if (selected.length < 2) {
+      state.dragSelectedCars = [...selected, carId];
+    } else {
+      alert('You can only select up to two cars.');
+    }
+
+    updateDragChips();
+    updateDragStakeUI();
+  }
+
+  function toggleGameTab(target) {
+    if (raceGameRunning || state.dragRaceRunning) {
+      alert('Finish the current race before switching games.');
+      return;
+    }
+
+    const showRace = target === 'race';
+    if (elements.raceGame) elements.raceGame.hidden = !showRace;
+    if (elements.dragGame) elements.dragGame.hidden = showRace;
+
+    if (elements.raceTab) elements.raceTab.classList.toggle('chip-active', showRace);
+    if (elements.dragTab) elements.dragTab.classList.toggle('chip-active', !showRace);
+  }
+
   function openBoxModal() {
     if (!elements.boxModal || !elements.revealCar) return;
     elements.boxModal.style.display = 'flex';
@@ -758,6 +1039,71 @@
     }
   }
 
+  function setupDragControls() {
+    if (elements.dragOptions) {
+      elements.dragOptions.addEventListener('click', handleDragSelection);
+    }
+
+    if (elements.dragStakeInput) {
+      elements.dragStakeInput.addEventListener('input', () => {
+        const value = parseStakeValue(elements.dragStakeInput.value);
+        if (String(value) !== elements.dragStakeInput.value && elements.dragStakeInput.value !== '') {
+          elements.dragStakeInput.value = value > 0 ? String(value) : '';
+        }
+        updateDragStakeUI();
+      });
+    }
+
+    if (elements.dragQuick3000) {
+      elements.dragQuick3000.addEventListener('click', () => {
+        const value = parseStakeValue(elements.dragStakeInput?.value) + 3000;
+        if (elements.dragStakeInput) elements.dragStakeInput.value = String(value);
+        updateDragStakeUI();
+      });
+    }
+
+    if (elements.dragQuick10000) {
+      elements.dragQuick10000.addEventListener('click', () => {
+        const value = parseStakeValue(elements.dragStakeInput?.value) + 10000;
+        if (elements.dragStakeInput) elements.dragStakeInput.value = String(value);
+        updateDragStakeUI();
+      });
+    }
+
+    if (elements.dragMax) {
+      elements.dragMax.addEventListener('click', () => {
+        if (elements.dragStakeInput) elements.dragStakeInput.value = String(state.torque);
+        updateDragStakeUI();
+      });
+    }
+
+    if (elements.dragStart) {
+      elements.dragStart.addEventListener('click', startDragRace);
+    }
+
+    if (elements.dragClose) {
+      elements.dragClose.addEventListener('click', () => {
+        if (state.dragRaceRunning) return;
+        hideDragModal();
+      });
+    }
+
+    if (elements.dragAgain) {
+      elements.dragAgain.addEventListener('click', () => {
+        hideDragModal();
+        resetDragGame();
+      });
+    }
+
+    if (elements.raceTab) {
+      elements.raceTab.addEventListener('click', () => toggleGameTab('race'));
+    }
+
+    if (elements.dragTab) {
+      elements.dragTab.addEventListener('click', () => toggleGameTab('drag'));
+    }
+  }
+
   function setupEvents() {
     elements.navItems.forEach((item) => {
       item.addEventListener('click', () => showSection(item.dataset.section));
@@ -844,7 +1190,11 @@
     updateProfile();
     setupShop();
     setupRaceStakeControls();
+    setupDragControls();
     setupEvents();
+    updateDragChips();
+    updateDragStakeUI();
+    resetDragBars();
 
     if (state.isWalletConnected) {
       showSection('garage');
