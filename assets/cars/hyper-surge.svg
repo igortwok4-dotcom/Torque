@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360">
+  <defs>
+    <linearGradient id="bgSurge" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0%" stop-color="#04050c" />
+      <stop offset="100%" stop-color="#160c2d" />
+    </linearGradient>
+    <linearGradient id="neonSurge" x1="0" x2="1" y1="0" y2="0">
+      <stop offset="0%" stop-color="#ff6bff" />
+      <stop offset="100%" stop-color="#7c00ff" />
+    </linearGradient>
+  </defs>
+  <rect width="640" height="360" fill="url(#bgSurge)" />
+  <g opacity="0.28" stroke="#2d1c46" stroke-width="1">
+    <path d="M0 295H640" />
+    <path d="M0 255H640" />
+    <path d="M0 215H640" />
+    <path d="M0 175H640" />
+    <path d="M0 135H640" />
+    <path d="M70 95V335" />
+    <path d="M150 95V335" />
+    <path d="M230 95V335" />
+    <path d="M310 95V335" />
+    <path d="M390 95V335" />
+    <path d="M470 95V335" />
+    <path d="M550 95V335" />
+  </g>
+  <g fill="#130f25" stroke="url(#neonSurge)" stroke-width="3">
+    <path d="M110 238L175 188H330L410 210H520L545 238L520 258H130Z" />
+  </g>
+  <g fill="#0b0f1f" stroke="#ff6bff" stroke-width="2">
+    <circle cx="215" cy="255" r="22" />
+    <circle cx="445" cy="255" r="22" />
+  </g>
+  <g fill="#ff6bff">
+    <circle cx="215" cy="255" r="8" />
+    <circle cx="445" cy="255" r="8" />
+  </g>
+  <path d="M195 206L250 178H332L360 194" fill="none" stroke="#7c00ff" stroke-width="3" opacity="0.85" />
+  <text x="32" y="56" fill="#ff6bff" font-family="'Orbitron', sans-serif" font-size="18" letter-spacing="2">HYPER SURGE</text>
+</svg>

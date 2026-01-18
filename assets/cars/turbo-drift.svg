@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360">
+  <defs>
+    <linearGradient id="bgTurbo" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0%" stop-color="#05070f" />
+      <stop offset="100%" stop-color="#14162d" />
+    </linearGradient>
+    <linearGradient id="neonTurbo" x1="0" x2="1" y1="0" y2="0">
+      <stop offset="0%" stop-color="#ff2bd6" />
+      <stop offset="100%" stop-color="#00e5ff" />
+    </linearGradient>
+  </defs>
+  <rect width="640" height="360" fill="url(#bgTurbo)" />
+  <g opacity="0.3" stroke="#232950" stroke-width="1">
+    <path d="M0 300H640" />
+    <path d="M0 260H640" />
+    <path d="M0 220H640" />
+    <path d="M0 180H640" />
+    <path d="M0 140H640" />
+    <path d="M60 100V320" />
+    <path d="M140 100V320" />
+    <path d="M220 100V320" />
+    <path d="M300 100V320" />
+    <path d="M380 100V320" />
+    <path d="M460 100V320" />
+    <path d="M540 100V320" />
+  </g>
+  <g fill="#0d1326" stroke="url(#neonTurbo)" stroke-width="3">
+    <path d="M105 235L180 190H330L410 210H515L545 235L530 255H130Z" />
+  </g>
+  <g fill="#0b0f1f" stroke="#ff2bd6" stroke-width="2">
+    <circle cx="210" cy="252" r="22" />
+    <circle cx="440" cy="252" r="22" />
+  </g>
+  <g fill="#ff2bd6">
+    <circle cx="210" cy="252" r="8" />
+    <circle cx="440" cy="252" r="8" />
+  </g>
+  <path d="M185 205L235 180H320L350 195" fill="none" stroke="#00e5ff" stroke-width="3" opacity="0.8" />
+  <text x="32" y="56" fill="#ff2bd6" font-family="'Orbitron', sans-serif" font-size="18" letter-spacing="2">TURBO DRIFT</text>
+</svg>

@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360">
+  <defs>
+    <linearGradient id="bgVolt" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0%" stop-color="#05060f" />
+      <stop offset="100%" stop-color="#0b1224" />
+    </linearGradient>
+    <linearGradient id="neonVolt" x1="0" x2="1" y1="0" y2="0">
+      <stop offset="0%" stop-color="#00e5ff" />
+      <stop offset="100%" stop-color="#b400ff" />
+    </linearGradient>
+  </defs>
+  <rect width="640" height="360" fill="url(#bgVolt)" />
+  <g opacity="0.35" stroke="#1b2b45" stroke-width="1">
+    <path d="M0 280H640" />
+    <path d="M0 240H640" />
+    <path d="M0 200H640" />
+    <path d="M0 160H640" />
+    <path d="M0 120H640" />
+    <path d="M80 80V320" />
+    <path d="M160 80V320" />
+    <path d="M240 80V320" />
+    <path d="M320 80V320" />
+    <path d="M400 80V320" />
+    <path d="M480 80V320" />
+    <path d="M560 80V320" />
+  </g>
+  <g opacity="0.8" fill="none" stroke="url(#neonVolt)" stroke-width="3">
+    <path d="M110 230L150 190H320L380 210H460L520 230" />
+    <path d="M160 230L190 200H300L330 215H430" />
+  </g>
+  <g fill="#0d1326" stroke="url(#neonVolt)" stroke-width="3">
+    <path d="M120 230L165 185H320L390 205H490L535 230L520 250H140Z" />
+  </g>
+  <g fill="#0b0f1f" stroke="#00e5ff" stroke-width="2">
+    <circle cx="200" cy="248" r="22" />
+    <circle cx="430" cy="248" r="22" />
+  </g>
+  <g fill="#00e5ff">
+    <circle cx="200" cy="248" r="8" />
+    <circle cx="430" cy="248" r="8" />
+  </g>
+  <text x="32" y="56" fill="#00e5ff" font-family="'Orbitron', sans-serif" font-size="18" letter-spacing="2">VOLT RACER</text>
+</svg>

@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360">
+  <defs>
+    <linearGradient id="bgPlasma" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0%" stop-color="#06040e" />
+      <stop offset="100%" stop-color="#220b2c" />
+    </linearGradient>
+    <linearGradient id="neonPlasma" x1="0" x2="1" y1="0" y2="0">
+      <stop offset="0%" stop-color="#ff7bff" />
+      <stop offset="100%" stop-color="#ff2b6a" />
+    </linearGradient>
+  </defs>
+  <rect width="640" height="360" fill="url(#bgPlasma)" />
+  <g opacity="0.3" stroke="#3d1b40" stroke-width="1">
+    <path d="M0 300H640" />
+    <path d="M0 260H640" />
+    <path d="M0 220H640" />
+    <path d="M0 180H640" />
+    <path d="M0 140H640" />
+    <path d="M90 100V330" />
+    <path d="M190 100V330" />
+    <path d="M290 100V330" />
+    <path d="M390 100V330" />
+    <path d="M490 100V330" />
+    <path d="M590 100V330" />
+  </g>
+  <g fill="#1a0f20" stroke="url(#neonPlasma)" stroke-width="3">
+    <path d="M100 236L180 190H345L420 210H520L545 236L520 258H125Z" />
+  </g>
+  <g fill="#0b0f1f" stroke="#ff7bff" stroke-width="2">
+    <circle cx="220" cy="254" r="22" />
+    <circle cx="450" cy="254" r="22" />
+  </g>
+  <g fill="#ff7bff">
+    <circle cx="220" cy="254" r="8" />
+    <circle cx="450" cy="254" r="8" />
+  </g>
+  <path d="M205 206L265 178H345L380 192" fill="none" stroke="#ff2b6a" stroke-width="3" opacity="0.85" />
+  <text x="32" y="56" fill="#ff7bff" font-family="'Orbitron', sans-serif" font-size="18" letter-spacing="2">PLASMA GT</text>
+</svg>

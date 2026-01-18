@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360">
+  <defs>
+    <linearGradient id="bgChrome" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0%" stop-color="#05080f" />
+      <stop offset="100%" stop-color="#0f1c2e" />
+    </linearGradient>
+    <linearGradient id="neonChrome" x1="0" x2="1" y1="0" y2="0">
+      <stop offset="0%" stop-color="#c0f9ff" />
+      <stop offset="100%" stop-color="#00b0ff" />
+    </linearGradient>
+  </defs>
+  <rect width="640" height="360" fill="url(#bgChrome)" />
+  <g opacity="0.35" stroke="#22344d" stroke-width="1">
+    <path d="M0 290H640" />
+    <path d="M0 250H640" />
+    <path d="M0 210H640" />
+    <path d="M0 170H640" />
+    <path d="M0 130H640" />
+    <path d="M90 90V330" />
+    <path d="M190 90V330" />
+    <path d="M290 90V330" />
+    <path d="M390 90V330" />
+    <path d="M490 90V330" />
+    <path d="M590 90V330" />
+  </g>
+  <g fill="#101826" stroke="url(#neonChrome)" stroke-width="3">
+    <path d="M95 235L190 185H360L430 205H530L555 235L535 255H120Z" />
+  </g>
+  <g fill="#0b0f1f" stroke="#c0f9ff" stroke-width="2">
+    <circle cx="215" cy="252" r="22" />
+    <circle cx="455" cy="252" r="22" />
+  </g>
+  <g fill="#c0f9ff">
+    <circle cx="215" cy="252" r="8" />
+    <circle cx="455" cy="252" r="8" />
+  </g>
+  <path d="M210 205L255 180H350L390 198" fill="none" stroke="#00b0ff" stroke-width="3" opacity="0.8" />
+  <text x="32" y="56" fill="#c0f9ff" font-family="'Orbitron', sans-serif" font-size="18" letter-spacing="2">CHROME BULLET</text>
+</svg>
