@@ -444,6 +444,17 @@ main {
   border-color: rgba(255, 43, 214, 0.4);
 }
 
+.chip-action {
+  cursor: pointer;
+  border: 1px solid rgba(0, 229, 255, 0.25);
+  color: var(--neon-cyan);
+}
+
+.chip-active {
+  background: rgba(0, 229, 255, 0.15);
+  box-shadow: 0 0 12px rgba(0, 229, 255, 0.2);
+}
+
 .detail-header {
   margin-top: 12px;
 }
@@ -521,7 +532,8 @@ canvas {
   margin-bottom: 8px;
 }
 
-#stake-input {
+#stake-input,
+#drag-stake {
   width: 100%;
   padding: 10px 12px;
   border-radius: 12px;
@@ -531,7 +543,8 @@ canvas {
   font-size: 14px;
 }
 
-#stake-input:disabled {
+#stake-input:disabled,
+#drag-stake:disabled {
   opacity: 0.6;
 }
 
@@ -540,12 +553,6 @@ canvas {
   gap: 8px;
   margin-top: 10px;
   flex-wrap: wrap;
-}
-
-.chip-action {
-  cursor: pointer;
-  border: 1px solid rgba(0, 229, 255, 0.25);
-  color: var(--neon-cyan);
 }
 
 .stake-balance {
@@ -558,6 +565,135 @@ canvas {
   margin-top: 6px;
   font-size: 13px;
   color: var(--neon-cyan);
+}
+
+.game-switcher {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.drag-picker {
+  margin-top: 16px;
+}
+
+.drag-label {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+
+.drag-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(72px, 1fr));
+  gap: 8px;
+}
+
+.drag-chip {
+  justify-content: center;
+  text-align: center;
+}
+
+.drag-chip.selected {
+  border-color: rgba(0, 229, 255, 0.8);
+  box-shadow: 0 0 12px rgba(0, 229, 255, 0.35);
+  color: var(--neon-cyan);
+}
+
+.drag-track {
+  min-height: 200px;
+}
+
+.drag-bars {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 10px;
+  align-items: end;
+  height: 200px;
+}
+
+.drag-bar {
+  position: relative;
+  height: 100%;
+  border-radius: 12px;
+  background: rgba(7, 10, 18, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 8px;
+}
+
+.drag-bar span {
+  font-size: 18px;
+  margin-bottom: 6px;
+}
+
+.drag-fill {
+  width: 100%;
+  border-radius: 8px;
+  background: linear-gradient(180deg, rgba(0, 229, 255, 0.9), rgba(180, 0, 255, 0.6));
+  height: 10%;
+  transition: height 0.1s ease;
+}
+
+.drag-bar.leading {
+  border-color: rgba(0, 229, 255, 0.8);
+  box-shadow: 0 0 14px rgba(0, 229, 255, 0.35);
+}
+
+.drag-bar.winner {
+  border-color: rgba(255, 215, 74, 0.9);
+  box-shadow: 0 0 18px rgba(255, 215, 74, 0.4);
+}
+
+.drag-bar.winner::after {
+  content: '👑';
+  position: absolute;
+  top: -24px;
+  font-size: 18px;
+}
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(7, 10, 18, 0.88);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 3000;
+  padding: 24px;
+}
+
+.overlay.active {
+  display: flex;
+}
+
+.overlay-card {
+  width: 100%;
+  max-width: 320px;
+  background: rgba(7, 10, 18, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 18px;
+  padding: 20px;
+  text-align: center;
+  box-shadow: var(--shadow);
+}
+
+.overlay-icon {
+  font-size: 32px;
+  margin-bottom: 8px;
+}
+
+.overlay-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.overlay-actions .btn {
+  margin-top: 0;
 }
 
 .leaderboard-row {
@@ -760,5 +896,9 @@ canvas {
   .header-right {
     flex-direction: column;
     align-items: flex-end;
+  }
+
+  .overlay-actions {
+    flex-direction: column;
   }
 }
