@@ -139,6 +139,7 @@
     detailName: document.getElementById('detail-name'),
     detailRarity: document.getElementById('detail-rarity'),
     detailIncome: document.getElementById('detail-income'),
+    sellPrice: document.getElementById('sell-price'),
     raceCanvas: document.getElementById('race-canvas'),
     multiplier: document.getElementById('multiplier'),
     startRace: document.getElementById('start-race'),
@@ -193,6 +194,7 @@
     backToProfile: document.getElementById('back-to-profile'),
     withdrawAmount: document.getElementById('withdraw-amount'),
     withdrawSubmit: document.getElementById('withdraw-submit'),
+    withdrawConnectWallet: document.getElementById('withdraw-connect-wallet'),
     withdrawError: document.getElementById('withdraw-error'),
     withdrawBalance: document.getElementById('withdraw-balance'),
     walletStatus: document.getElementById('wallet-status'),
@@ -244,6 +246,10 @@
     return `TON ${Number(value).toFixed(2)}`;
   }
 
+  function formatTONAmount(value, decimals = 2) {
+    return `TON ${Number(value).toFixed(decimals)}`;
+  }
+
   function formatDuration(ms) {
     const totalMinutes = Math.max(0, Math.floor(ms / 60000));
     const hours = Math.floor(totalMinutes / 60);
@@ -270,7 +276,7 @@
       elements.tonBalance.textContent = formatTON(state.tonBalance);
     }
     if (elements.withdrawBalance) {
-      elements.withdrawBalance.textContent = formatTON(state.tonBalance);
+      elements.withdrawBalance.textContent = `Available: ${formatTON(state.tonBalance)}`;
     }
   }
 
@@ -308,6 +314,24 @@
       message,
       actions: [{ label: 'OK', variant: 'secondary' }]
     });
+  }
+
+  async function connectWallet(redirectSection = 'garage') {
+    try {
+      await tonConnectUI.connectWallet();
+      state.isWalletConnected = true;
+      saveState(STORAGE_KEYS.walletConnected, 'true');
+      state.lastUpdate = Date.now();
+      saveState(STORAGE_KEYS.lastUpdate, state.lastUpdate);
+      syncTorqueUI();
+      updateWithdrawUI();
+      if (redirectSection) {
+        showSection(redirectSection);
+      }
+    } catch (error) {
+      console.error(error);
+      alert('Connection failed. Please try Tonkeeper or check the manifest.');
+    }
   }
 
   function syncTorqueUI() {
@@ -488,14 +512,22 @@
     return `${address.slice(0, 6)}...${address.slice(-4)}`;
   }
 
-  function renderProfile() {
-    updateProfile();
+  function updateWithdrawUI() {
+    const address = tonConnectUI?.wallet?.account?.address || '';
     if (elements.walletStatus) {
-      const address = tonConnectUI?.wallet?.account?.address || '';
       elements.walletStatus.textContent = address
         ? `Wallet: ${formatWalletAddress(address)}`
-        : 'Connect wallet to withdraw.';
+        : 'Wallet not connected.';
     }
+    if (elements.withdrawConnectWallet) {
+      elements.withdrawConnectWallet.style.display = address ? 'none' : 'inline-flex';
+    }
+    updateBalances();
+  }
+
+  function renderProfile() {
+    updateProfile();
+    updateWithdrawUI();
     updateBalances();
   }
 
@@ -503,6 +535,7 @@
     const car = state.cars[index];
     if (!car) return;
     state.selectedCarIndex = index;
+    const sellValue = getSellPrice(car);
     if (elements.detailImg) {
       elements.detailImg.src = car.img;
       prepareCarImage(elements.detailImg, car.name);
@@ -510,21 +543,23 @@
     if (elements.detailName) elements.detailName.textContent = car.name;
     if (elements.detailRarity) elements.detailRarity.textContent = `${car.rarity} • Level ${car.level}`;
     if (elements.detailIncome) elements.detailIncome.textContent = `${car.income} ${TOKEN_TICKER}/hr`;
+    if (elements.sellPrice) elements.sellPrice.textContent = `Sell Price: ${formatTONAmount(sellValue, 3)}`;
     showSection('car-detail');
   }
 
   function getSellPrice(car) {
     const rarityBase = {
-      Common: 0.01,
-      Rare: 0.03,
-      Epic: 0.08,
-      Legendary: 0.18
+      Common: 0.008,
+      Rare: 0.018,
+      Epic: 0.04,
+      Legendary: 0.09
     };
-    const base = rarityBase[car.rarity] || 0.01;
-    const levelBonus = car.level * 0.002;
-    const incomeBonus = car.income / 200000;
-    const price = Math.min(base + levelBonus + incomeBonus, 0.5);
-    return Number(price.toFixed(3));
+    const base = rarityBase[car.rarity] || 0.008;
+    const levelFactor = 1 + (car.level - 1) * 0.06;
+    const incomeFactor = 1 + Math.min(car.income / 2500, 1.2) * 0.25;
+    const price = base * levelFactor * incomeFactor;
+    const rounded = Math.round(price * 1000) / 1000;
+    return Math.max(0.005, rounded);
   }
 
   function confirmSellCar() {
@@ -538,7 +573,7 @@
     const price = getSellPrice(car);
     showModal({
       title: 'Sell Car',
-      message: `Sell ${car.name} for ${price.toFixed(3)} TON? This cannot be undone.`,
+      message: `Sell ${car.name} for ${formatTONAmount(price, 3)}? This cannot be undone.`,
       actions: [
         { label: 'Cancel', variant: 'secondary' },
         {
@@ -787,6 +822,9 @@
       return;
     }
 
+    hideModal();
+    hideDragModal();
+
     document.querySelectorAll('.section').forEach((section) => section.classList.remove('active'));
     const target = document.getElementById(id);
     if (target) target.classList.add('active');
@@ -799,8 +837,12 @@
       renderGarage();
     }
 
-    if (id === 'profile' || id === 'withdraw') {
+    if (id === 'profile') {
       renderProfile();
+    }
+
+    if (id === 'withdraw') {
+      updateWithdrawUI();
     }
 
     if (id === 'shop') {
@@ -1535,19 +1577,8 @@
     }
 
     if (elements.connectWallet) {
-      elements.connectWallet.addEventListener('click', async () => {
-        try {
-          await tonConnectUI.connectWallet();
-          state.isWalletConnected = true;
-          saveState(STORAGE_KEYS.walletConnected, 'true');
-          state.lastUpdate = Date.now();
-          saveState(STORAGE_KEYS.lastUpdate, state.lastUpdate);
-          showSection('garage');
-          syncTorqueUI();
-        } catch (error) {
-          console.error(error);
-          alert('Connection failed. Please try Tonkeeper or check the manifest.');
-        }
+      elements.connectWallet.addEventListener('click', () => {
+        connectWallet('garage');
       });
     }
 
@@ -1573,6 +1604,13 @@
 
     if (elements.withdrawSubmit) {
       elements.withdrawSubmit.addEventListener('click', () => {
+        const address = tonConnectUI?.wallet?.account?.address || '';
+        if (!address) {
+          if (elements.withdrawError) {
+            elements.withdrawError.textContent = 'Connect your TON wallet to withdraw.';
+          }
+          return;
+        }
         const raw = Number(elements.withdrawAmount?.value || 0);
         if (!raw || raw <= 0) {
           if (elements.withdrawError) elements.withdrawError.textContent = 'Enter a valid amount.';
@@ -1585,7 +1623,7 @@
         if (elements.withdrawError) elements.withdrawError.textContent = '';
         showModal({
           title: 'Confirm Withdrawal',
-          message: `Withdraw ${raw.toFixed(2)} TON to your wallet?`,
+          message: `Withdraw ${formatTONAmount(raw, 3)} to your wallet?`,
           actions: [
             { label: 'Cancel', variant: 'secondary' },
             {
@@ -1602,10 +1640,17 @@
                 if (elements.withdrawAmount) elements.withdrawAmount.value = '';
                 showMessage('Withdrawal Complete', 'Your TON withdrawal has been recorded.');
                 TelegramApp?.HapticFeedback?.notificationOccurred('success');
+                showSection('profile');
               }
             }
           ]
         });
+      });
+    }
+
+    if (elements.withdrawConnectWallet) {
+      elements.withdrawConnectWallet.addEventListener('click', () => {
+        connectWallet(null);
       });
     }
 
